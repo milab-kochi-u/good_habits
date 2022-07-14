@@ -4,6 +4,7 @@ module.exports = (sequelize, DataTypes) => {
     scheme: DataTypes.STRING
   }, {});
   Scheme.associate = (models) => {
+    Scheme.belongsToMany(models.Work_user,{through: {model: models.Work_user_scheme}});
   };
   return Scheme;
 };
