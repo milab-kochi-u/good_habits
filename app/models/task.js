@@ -1,4 +1,5 @@
 'use strict';
+const dayjs = require('dayjs');
 module.exports = (sequelize, DataTypes) => {
   const Task = sequelize.define('Task', {
     result:{
@@ -26,11 +27,16 @@ module.exports = (sequelize, DataTypes) => {
     this.finished_at = elm_finished_at;
     await this.save();
   }
-  Task.prototype.delete = async function(canceled_at){
-    this.canceled_at = canceled_at;
+  Task.prototype.delete = async function(
+    {canceled_at = elm_canceled_at} = {canceled_at: dayjs()}
+    ){
+    this.canceled_at = elm_canceled_at;
     await this.save();
   }
-  Task.prototype.change = async function(canceled_at,params){
+  Task.prototype.change = async function({
+    canceled_at: elm_canceled_at,
+    new_start_time: elm_new_start_time,
+    new_end_time: elm_new_end_time}){
     const work = params.work;
     const start_time = params.start_time;
     const end_time = params.end_time;
