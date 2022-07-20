@@ -8,28 +8,31 @@ module.exports = (sequelize, DataTypes) => {
     User.hasMany(models.Work_user);
     User.models = models;
   };
-  User.prototype.addScheme = async function({work:elm_work, scheme:elm_scheme}){
+  User.prototype.addScheme = async function({
+    work,
+    scheme
+  }){
     const work_users = await this.getWork_users({
-      where: {WorkId: elm_work.id, expiredAt: null}
+      where: {WorkId: work.id, expiredAt: null}
     });
     let res = false;
     if (work_users.length >= 1){
-      await work_users[0].addScheme(elm_scheme);
+      await work_users[0].addScheme(scheme);
       res = true;
     }
     return res;
   };
   User.prototype.createTask = async function({
-    work: elm_work,
-    start_time: elm_start_time,
-    end_time: elm_end_time
+    work,
+    start_time,
+    end_time,
   }){
     const work_users = await this.getWork_users({
-      where: {WorkId: elm_work.id, expiredAt: null}
+      where: {WorkId: work.id, expiredAt: null}
     });
     const task = await work_users[0].createTask({
-      start_time: elm_start_time,
-      end_time: elm_end_time
+      start_time: start_time,
+      end_time: end_time
     });
     return task;
   }

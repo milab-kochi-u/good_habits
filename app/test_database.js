@@ -47,56 +47,74 @@ const Scheme = models.Scheme;
         scheme: 'ダンベル',
     });
 
-    /* scenario1 
-        「太郎」は中学2年生．受験対策に向け，苦手な英語を理解したいと思っている．
-        ワーク「英語学習」を2020年1月1日に登録し，3年生の夏(2020年8月)あたりまで
-        このアプリを使い頑張って英語学習に励もうとしている．
-    */
+    console.log(`scenario1 
+      「太郎」は中学2年生．受験対策に向け，苦手な英語を理解したいと思っている．
+      ワーク「英語学習」を2020年1月1日に登録し，3年生の夏(2020年8月)あたりまで
+      このアプリを使い頑張って英語学習に励もうとしている．
+    `);
     const Taro = await User.findOne({ where: { id: 1}});
     const Learn_English = await Work.findOne({ where: { id: 3}});
 
     await models.sequelize.sync();
-    console.log("-----", process.env, "----");
+    // console.log("-----", process.env, "----");
     console.log("----", dayjs().format('YYYY-MM-DD HH:mm:ss'), "----");
+    console.log(`system:ユーザ「太郎」がワーク「英語学習」を追加した．`);
     await Taro.addWork(Learn_English);
 
     process.env['FAKETIME'] = dayjs().add(1,'m').format('YYYY-MM-DD HH:mm:ss');
     console.log("----", dayjs().format('YYYY-MM-DD HH:mm:ss'), "----");
 
-    // ユーザ「太郎」がワーク「英語学習」を追加した．
-    await Taro.addWork(Learn_English);
 
-    // ユーザ「太郎」がワーク「英語学習」に工夫「教科書A」を登録した．
+    console.log(`system:ユーザ「太郎」がワーク「英語学習」に工夫「教科書A」を登録した．`);
     await Taro.addScheme({
         work:Learn_English,
         scheme:await Scheme.findOne({where:{id:1}})
     });
-    // ユーザ「太郎」がワーク「英語学習」のタスクを10分後に実施しようと考えた
+    console.log(`system:ユーザ「太郎」がワーク「英語学習」を10分後に実施するタスクを設置した．`);
     const task = await Taro.createTask({
         work : Learn_English,
         start_time : dayjs().add(10,'m'),
         end_time : dayjs().add(1,'h').add(10,'m')
     });
-    await task.close({
-        result: true,
-        started_at: dayjs().add(12,'m'),
-        finished_at: dayjs().add(1,'h').add(13,'m')
-    });
-
-    process.env['FAKETIME'] = dayjs().add(1,'d').minute(0).format('YYYY-MM-DD HH:mm:ss');
+    console.log(`そして１０分後．．．`);
+    process.env['FAKETIME'] = dayjs().add(10,'m').format('YYYY-MM-DD HH:mm:ss');
     console.log("----", dayjs().format('YYYY-MM-DD HH:mm:ss'), "----");
+    console.log(`system:ユーザ「太郎」のワーク「英語学習」のタスクスタート．`);
+    await task.start();
 
-    // ワークのキャンセル
-    const t_temp = await Taro.createTask({
+    console.log(`そして1時間後．．．`);
+    process.env['FAKETIME'] = dayjs().add(1,'d').format('YYYY-MM-DD HH:mm:ss');
+    console.log("----", dayjs().format('YYYY-MM-DD HH:mm:ss'), "----");
+    console.log(`system:ユーザ「太郎」のワーク「英語学習」に関するタスク終了，完了報告も実施した．`);
+    await task.finish({result:true});
+
+    // ワークのキャンセルのテスト
+    console.log('system:ユーザ「太郎」がワーク「英語学習」を20分後に実施するタスクを設置した．')
+    let t_temp = await Taro.createTask({
         work: Learn_English,
         start_time: dayjs().add(20,'m'),
         end_time: dayjs().add(1,'h').add(50,'m')
     });
-
     process.env['FAKETIME'] = dayjs().add(15,'m').format('YYYY-MM-DD HH:mm:ss');
     console.log("----", dayjs().format('YYYY-MM-DD HH:mm:ss'), "----");
+    console.log('system:ユーザ「太郎」がワーク「英語学習」のタスクをキャンセルした．')
+    t_temp.delete();
 
-    t_temp.delete({});
+    // タスクの変更
+    process.env['FAKETIME'] = dayjs().add(1,'d').minute(0).add(6,'h').format('YYYY-MM-DD HH:mm:ss'); //翌朝
+    console.log("----", dayjs().format('YYYY-MM-DD HH:mm:ss'), "----");
+    console.log(`system:ユーザ「太郎」がワーク「英語学習」を14分後に実施するタスクを設置した．`)
+    t_temp = await Taro.createTask({
+        work: Learn_English,
+        start_time: dayjs().add(14,'m'),
+        end_time: dayjs().add(1,'h').add(14,'m')
+    });
+    // 開始と終了時刻を２日後にしてみる
+    console.log(`system:ユーザ「太郎」がワーク「英語学習」のタスクを2日後に変更した．`)
+    t_temp.change({
+        new_start_time: dayjs().add(14,'m').add(2,'d'),
+        new_end_time: dayjs().add(1,'h').add(14,'m').add(2,'d')
+    });
     
     // data1[0].destroy({through : {expiredAt: '2022/03/01 00:00'}});
     // await Taro.addWork(work3, {through : {expiredAt: '2020/03/01 00:00'}});

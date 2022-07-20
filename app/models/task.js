@@ -10,36 +10,47 @@ module.exports = (sequelize, DataTypes) => {
     end_time: DataTypes.DATE,
     started_at: DataTypes.DATE,
     finished_at: DataTypes.DATE,
-    canceled_at: DataTypes.DATE,
     source_task: DataTypes.INTEGER
-  }, {});
+  }, {
+    paranoid: true,
+    deletedAt: 'canceledAt'
+  });
   Task.associate = (models) => {
     Task.belongsTo(models.Work_user);
     Task.models = models;
   };
-  Task.prototype.close = async function({
-    result: elm_result,
-    started_at: elm_started_at,
-    finished_at: elm_finished_at
-  }){
-    this.result = elm_result;
-    this.started_at = elm_started_at;
-    this.finished_at = elm_finished_at;
+  Task.prototype.start = async function(){
+    this.started_at = dayjs();
     await this.save();
   }
-  Task.prototype.delete = async function(
-    {canceled_at = elm_canceled_at} = {canceled_at: dayjs()}
-    ){
-    this.canceled_at = elm_canceled_at;
+  Task.prototype.finish = async function({result=null}){
+    this.finished_at = dayjs();
+    this.result = result;
     await this.save();
+  }
+  // Task.prototype.close = async function({result,started_at,finished_at}){
+  //   this.result = result;
+  //   this.started_at = started_at;
+  //   this.finished_at = finished_at;
+  //   await this.save();
+  // }
+
+  Task.prototype.delete = async function(){
+    this.destroy();
   }
   Task.prototype.change = async function({
-    canceled_at: elm_canceled_at,
-    new_start_time: elm_new_start_time,
-    new_end_time: elm_new_end_time}){
-    const work = params.work;
-    const start_time = params.start_time;
-    const end_time = params.end_time;
+    new_start_time,
+    new_end_time
+  }){
+    const prev_id = this.id;
+    const work_user_id = this.WorkUserId;
+    this.destroy();
+    Task.create({
+      WorkUserId:work_user_id,
+      start_time:new_start_time,
+      end_time:new_end_time,
+      source_task:prev_id
+    });
   }
   return Task;
 };
