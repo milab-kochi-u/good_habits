@@ -1,10 +1,23 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
+
   // ユーザ
   const User = sequelize.define('User', {
     name: DataTypes.STRING,
-  }, {});
+    waveLength: DataTypes.INTEGER,
+    initialPhase: DataTypes.INTEGER,
+    startDays: DataTypes.INTEGER, // 何日目から利用を始めるか
+    initialMotivation: DataTypes.FLOAT,
+    intervalDaysForSelfReflection: DataTypes.INTEGER,
+    lastSelfReflectedAt: DataTypes.DATE,  // 最後に振り返りを行った日付
+    thresholdOfWorkChanging: DataTypes.FLOAT,
+    thresholdOfSchemeChanging: DataTypes.FLOAT,
+  }, {
+    timestamps: false
+  });
+
   User.associate = (models) => {
+    User.belongsToMany(models.Category, { through: { model: models.UsersCategoryPriority } });
     User.belongsToMany(models.Work, { through: { model: models.UsersWork } });
     User.hasMany(models.UsersWork);
   };

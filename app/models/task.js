@@ -1,5 +1,6 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
+  
   // タスク（実施予定，実施結果の記録）
   const Task = sequelize.define('Task', {
     result:{
@@ -14,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     paranoid: true,
   });
+
   Task.associate = (models) => {
     Task.belongsTo(models.UsersWork);
   };
