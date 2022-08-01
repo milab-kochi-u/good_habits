@@ -1,10 +1,20 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
+
+  // ワークを実施する際の工夫
   const Scheme = sequelize.define('Scheme', {
-    scheme: DataTypes.STRING
-  }, {});
+    label: DataTypes.STRING,
+    waveLength: DataTypes.INTEGER,
+    initialPhase: DataTypes.INTEGER,
+  }, {
+    timestamps: false
+  });
+
   Scheme.associate = (models) => {
-    Scheme.belongsToMany(models.Work_user,{through: {model: models.Work_user_scheme}});
+    Scheme.belongsToMany(models.Category, { through: { model: models.SchemesCategoryPriority } });
+    Scheme.belongsToMany(models.UsersWork, { through: { model: models.UsersScheme } });
+    Scheme.hasMany(models.UsersScheme);
   };
+  
   return Scheme;
 };

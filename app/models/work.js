@@ -1,12 +1,20 @@
 'use strict';
 module.exports = (sequelize, DataTypes) => {
-  const Work = sequelize.define('Work', {
-    work: DataTypes.STRING
-  }, {});
-  Work.associate = (models) => {
-    Work.belongsToMany(models.User,{through: { model: models.Work_user, unique: false}});
 
-    Work.hasMany(models.Work_user);
+  // ワーク（継続させたいこと）
+  const Work = sequelize.define('Work', {
+    label: DataTypes.STRING,
+    waveLength: DataTypes.INTEGER,
+    initialPhase: DataTypes.INTEGER,
+  }, {
+    timestamps: false
+  });
+
+  Work.associate = (models) => {
+    Work.belongsToMany(models.Category, { through: { model: models.WorksCategoryPriority } });
+    Work.belongsToMany(models.User, { through: { model: models.UsersWork } });
+    Work.hasMany(models.UsersWork);
   };
+
   return Work;
 };

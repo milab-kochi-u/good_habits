@@ -1,5 +1,6 @@
 {
   "development": {
+    "logging": false,
     "database": "db-development",
     "dialect": "sqlite",
     "storage": "db-dev.sqlite3"
