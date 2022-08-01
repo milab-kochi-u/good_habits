@@ -1,8 +1,8 @@
+console.log(process.env);
 const models = require('./models/index.js');
 const dayjs = require('dayjs');
 const yargs = require('yargs');
 const user = require('./models/user.js');
-
 const numberOfSignificantDigits = 2;    // 有効桁数
 
 // 有効数字に丸める
@@ -69,6 +69,8 @@ function checkChemistry(a, b, day) {
         }
 
         // シミュレーションの開始日と終了日をログに記録する
+        delete process.env.FAKETIME;
+        console.log('シミュレーションを開始しました: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
         if (!simulationStartDate) simulationStartDate = dayjs(date);    // 過去のシミュレーションも含めた開始日
         const simulationFinishDate = date.add(argv.days-1, 'day');
         await models.SimulationLog.create({
@@ -85,7 +87,9 @@ function checkChemistry(a, b, day) {
 
         for (let day = 0; day < argv.days; day++) {
             // 以降，FAKETIME で日付を騙す
+            process.env['FAKETIME_NO_CACHE'] = "1";
             process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');
+
             console.log(day+1, '日目:', date.format('YYYY/MM/DD HH:mm'));
             const passedDays = date.diff(simulationStartDate, 'day');
             console.log('  シミュレーション開始から', passedDays, '日経過');
@@ -138,6 +142,9 @@ function checkChemistry(a, b, day) {
             }
             date = date.add(1, 'day');  // 1日進める
         }
+        delete process.env.FAKETIME;
+        process.env['FAKETIME_NO_CACHE'] = "0";
+        console.log('シミュレーションを完了しました: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
     }
     catch (e) {
         console.error(`Error: ${e.message}`);
