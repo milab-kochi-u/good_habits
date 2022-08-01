@@ -3,10 +3,6 @@ if [ "$(uname)" == 'Darwin' ]; then
 	export DYLD_INSERT_LIBRARIES=/opt/homebrew/lib/faketime/libfaketime.1.dylib
 fi
 export FAKETIME_NO_CACHE=1
-if [ "$(uname)" != 'Darwin' ]; then
-	START_TIME="@2020-01-01 00:00:00"
-	export FAKETIME="${START_TIME}"
-fi
 
 # ダミーデータの生成
 # node generate_dummydata.js > dummydata.json

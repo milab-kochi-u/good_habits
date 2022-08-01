@@ -10,6 +10,6 @@ services:
         environment:
             - DEBUG=app:*
         # この2行で日時を設定
-            - LD_PRELOAD=/usr/local/lib/faketime/libfaketime.so.1
+            - LD_PRELOAD=/usr/local/lib/faketime/libfaketimeMT.so.1
 
         command: sh -c "npm install && /bin/sh"

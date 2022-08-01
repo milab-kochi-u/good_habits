@@ -85,7 +85,6 @@ function checkChemistry(a, b, day) {
 
         for (let day = 0; day < argv.days; day++) {
             // 以降，FAKETIME で日付を騙す
-            process.env['FAKETIME_NO_CACHE'] = "1";
             process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');
 
             console.log(day+1, '日目:', date.format('YYYY/MM/DD HH:mm'));
@@ -140,8 +139,8 @@ function checkChemistry(a, b, day) {
             }
             date = date.add(1, 'day');  // 1日進める
         }
+
         delete process.env.FAKETIME;
-        process.env['FAKETIME_NO_CACHE'] = "0";
         console.log('シミュレーションを完了しました: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
         simLog.finishedAt = simulationFinishDate;
         simLog.save();
