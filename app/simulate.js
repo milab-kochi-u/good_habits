@@ -1,4 +1,3 @@
-console.log(process.env);
 const models = require('./models/index.js');
 const dayjs = require('dayjs');
 const yargs = require('yargs');
@@ -70,14 +69,13 @@ function checkChemistry(a, b, day) {
 
         // シミュレーションの開始日と終了日をログに記録する
         delete process.env.FAKETIME;
-        console.log('シミュレーションを開始しました: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
+        console.log('シミュレーションを開始します: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
         if (!simulationStartDate) simulationStartDate = dayjs(date);    // 過去のシミュレーションも含めた開始日
         const simulationFinishDate = date.add(argv.days-1, 'day');
-        await models.SimulationLog.create({
+        const simLog = await models.SimulationLog.create({
             startedAt: date,    // 今回のシミュレーションの開始日
-            finishedAt: simulationFinishDate,
+            // finishedAt: simulationFinishDate,    // シミュレーション終了日（実際のシミュレーション終了時に更新する）
         });
-        console.log('今回のシミュレーション開始日:', date.format('YYYY/MM/DD'));
         console.log('simulationStartDate:', simulationStartDate.format('YYYY/MM/DD'));
         console.log('simulationFinishDate:', simulationFinishDate.format('YYYY/MM/DD'));
 
@@ -145,6 +143,8 @@ function checkChemistry(a, b, day) {
         delete process.env.FAKETIME;
         process.env['FAKETIME_NO_CACHE'] = "0";
         console.log('シミュレーションを完了しました: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
+        simLog.finishedAt = simulationFinishDate;
+        simLog.save();
     }
     catch (e) {
         console.error(`Error: ${e.message}`);
