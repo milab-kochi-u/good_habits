@@ -93,6 +93,7 @@ function checkChemistry(a, b, day) {
             for (let user of users) {
                 if (user.startDays > passedDays) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
+                // ワークの決定
                 if (addedWorks.length < 1) {
                     console.log('    ', user.name, 'が利用開始します');
                     let maxChemistry = -1;
@@ -114,6 +115,8 @@ function checkChemistry(a, b, day) {
                 if (user.lastSelfReflectedAt !== null && dayjs(user.lastSelfReflectedAt).isValid()) {
                     nextSelfReflected = dayjs(user.lastSelfReflectedAt).add(user.intervalDaysForSelfReflection, 'day');
                 }
+
+                // 予定の振り返り（タスク登録）
                 if (nextSelfReflected.diff(date, 'day') < 1) {
                     console.log('        ', user.name, 'が振り返ります');
                     // TODO: ワークを変更するかを検討し，変更する場合は変更できるようにする
@@ -136,6 +139,18 @@ function checkChemistry(a, b, day) {
                     user.lastSelfReflectedAt = date;
                     user.save();
                 }
+
+                // 予定（タスク）の実施報告
+                let UsersWorks = await user.getWorks();
+                for(let w of UsersWorks){
+                    let tasks = await user.getTasks(w);
+                    // console.log(tasks);
+                    for(let task of tasks){
+                        // console.log(task);
+                        console.log(user.name, 's task(start_time): ', task.start_time);
+                    }
+                }
+                
             }
             date = date.add(1, 'day');  // 1日進める
         }

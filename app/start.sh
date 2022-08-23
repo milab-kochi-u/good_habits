@@ -11,13 +11,13 @@ fi
 export FAKETIME_NO_CACHE=1
 
 # ダミーデータの生成
-node generate_dummydata.js > dummydata.json
+# node generate_dummydata.js > dummydata.json
 # ダミーデータを読み込む
-node import_dummydata.js dummydata.json
+# node import_dummydata.js dummydata.json
 
 # シミュレーションの実行
 # -- 過去のシミュレーション結果を削除し，2020年1月1日から365日間のシミュレーションを行う
-node simulate.js --init "${setdate}" -d 30
+node simulate.js --init "${setdate}" -d 5
 
 # シミュレーションの実行
 # -- 過去のシミュレーションの続きとして1000日間のシミュレーションを行う

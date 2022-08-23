@@ -35,5 +35,16 @@ module.exports = (sequelize, DataTypes) => {
     return newTask;
   }
 
+  // タスクの開始
+  Task.prototype.open = async function(started_at){
+    this.started_at = started_at;
+    await this.save();
+  }
+  // タスクの終了
+  Task.prototype.close = async function(finished_at){
+    this.finished_at = finished_at;
+    await this.save();
+  }
+
   return Task;
 };
