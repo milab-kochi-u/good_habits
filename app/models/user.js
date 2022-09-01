@@ -54,7 +54,7 @@ module.exports = (sequelize, DataTypes) => {
     //   include: { all: true, nested: true }
     // });
     return await myWorks[0].getTasks({
-      order: [['start_time', 'DESC']]
+      order: [['start_time', 'ASC']]
     });
   }
   

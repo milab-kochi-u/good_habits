@@ -123,6 +123,7 @@ function checkChemistry(a, b, day) {
                     // TODO: 複数のワークを設定できるようにする
                     // TODO: 工夫を変更するかを検討し，変更する場合は変更できるようにする
                     // TODO: 複数の工夫を設定できるようにする
+                    // TODO: 時間もまばらにする（全部19:00になってる）
                     for (addedWork of addedWorks) {
                         for (let d = 0; d < user.intervalDaysForSelfReflection; d++) {
                             // TODO: 予定を立てられるようにする
@@ -144,12 +145,22 @@ function checkChemistry(a, b, day) {
                 let UsersWorks = await user.getWorks();
                 for(let w of UsersWorks){
                     let tasks = await user.getTasks(w);
-                    // console.log(tasks);
                     for(let task of tasks){
-                        // console.log(task);
-                        console.log(user.name, 's task(start_time): ', task.start_time);
+                        if(dayjs(task.start_time).format('YYYY-MM-DD') !== dayjs(date).format('YYYY-MM-DD')){
+                            continue;
+                        }
+                        // 時間をタスクの開始・終了時間まで進める
+                        process.env['FAKETIME'] = dayjs(task.start_time).format('YYYY-MM-DD HH:mm:ss');
+                        task.open(task.start_time);
+                        console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に開始しました．');
+
+                        process.env['FAKETIME'] = dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
+                        task.close(task.end_time);
+                        console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
                     }
                 }
+                // 時間を元に戻す
+                process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');
                 
             }
             date = date.add(1, 'day');  // 1日進める
