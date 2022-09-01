@@ -82,6 +82,11 @@ function checkChemistry(a, b, day) {
         const users = await models.User.findAll();
         const works = await models.Work.findAll();
         const schemes = await models.Scheme.findAll();
+        // TODO: schemeの割当をする
+
+        // reschedule test -----
+        let cnt = 0;
+        // reschedule test -----
 
         for (let day = 0; day < argv.days; day++) {
             // 以降，FAKETIME で日付を騙す
@@ -90,6 +95,7 @@ function checkChemistry(a, b, day) {
             console.log(day+1, '日目:', date.format('YYYY/MM/DD HH:mm'));
             const passedDays = date.diff(simulationStartDate, 'day');
             console.log('  シミュレーション開始から', passedDays, '日経過');
+
             for (let user of users) {
                 if (user.startDays > passedDays) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
@@ -110,6 +116,9 @@ function checkChemistry(a, b, day) {
                     await user.addWork(selectedWork);
                     addedWorks = await user.getWorks();
                 }
+
+                // TODO: 工夫の決定
+
                 // TODO: 予定の実施結果を記録できるようにする
                 let nextSelfReflected = dayjs(date).subtract(1, 'day');
                 if (user.lastSelfReflectedAt !== null && dayjs(user.lastSelfReflectedAt).isValid()) {
@@ -149,6 +158,19 @@ function checkChemistry(a, b, day) {
                         if(dayjs(task.start_time).format('YYYY-MM-DD') !== dayjs(date).format('YYYY-MM-DD')){
                             continue;
                         }
+
+                        // reschedule test -----
+                        if (cnt == 0){
+                            const new_start = dayjs(task.start_time).add(12,'h');
+                            const new_end = dayjs(task.end_time).add(12,'h');
+                            task.reschedule(new_start,new_end);
+                            cnt = 1;
+                            continue;
+                        }
+                            // TODO: 新タスクが当日中だとforeachで拾えないので対策が必要
+
+                        // reschedule test -----
+
                         // 時間をタスクの開始・終了時間まで進める
                         process.env['FAKETIME'] = dayjs(task.start_time).format('YYYY-MM-DD HH:mm:ss');
                         task.open(task.start_time);
