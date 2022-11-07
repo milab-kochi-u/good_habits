@@ -50,8 +50,11 @@ module.exports = (sequelize, DataTypes) => {
       where: { WorkId: work.id },
     });
     if (myWorks.length != 1) return null;
+    // let res = await myWorks[0].getTasks({
+    //   include: { all: true, nested: true }
+    // });
     return await myWorks[0].getTasks({
-      include: { all: true, nested: true }
+      order: [['start_time', 'ASC']]
     });
   }
   

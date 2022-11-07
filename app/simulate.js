@@ -82,6 +82,11 @@ function checkChemistry(a, b, day) {
         const users = await models.User.findAll();
         const works = await models.Work.findAll();
         const schemes = await models.Scheme.findAll();
+        // TODO: schemeの割当をする
+
+        // reschedule test -----
+        let cnt = 0;
+        // reschedule test -----
 
         for (let day = 0; day < argv.days; day++) {
             // 以降，FAKETIME で日付を騙す
@@ -90,9 +95,11 @@ function checkChemistry(a, b, day) {
             console.log(day+1, '日目:', date.format('YYYY/MM/DD HH:mm'));
             const passedDays = date.diff(simulationStartDate, 'day');
             console.log('  シミュレーション開始から', passedDays, '日経過');
+
             for (let user of users) {
                 if (user.startDays > passedDays) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
+                // ワークの決定
                 if (addedWorks.length < 1) {
                     console.log('    ', user.name, 'が利用開始します');
                     let maxChemistry = -1;
@@ -109,17 +116,23 @@ function checkChemistry(a, b, day) {
                     await user.addWork(selectedWork);
                     addedWorks = await user.getWorks();
                 }
+
+                // TODO: 工夫の決定
+
                 // TODO: 予定の実施結果を記録できるようにする
                 let nextSelfReflected = dayjs(date).subtract(1, 'day');
                 if (user.lastSelfReflectedAt !== null && dayjs(user.lastSelfReflectedAt).isValid()) {
                     nextSelfReflected = dayjs(user.lastSelfReflectedAt).add(user.intervalDaysForSelfReflection, 'day');
                 }
+
+                // 予定の振り返り（タスク登録）
                 if (nextSelfReflected.diff(date, 'day') < 1) {
                     console.log('        ', user.name, 'が振り返ります');
                     // TODO: ワークを変更するかを検討し，変更する場合は変更できるようにする
                     // TODO: 複数のワークを設定できるようにする
                     // TODO: 工夫を変更するかを検討し，変更する場合は変更できるようにする
                     // TODO: 複数の工夫を設定できるようにする
+                    // TODO: 時間もまばらにする（全部19:00になってる）
                     for (addedWork of addedWorks) {
                         for (let d = 0; d < user.intervalDaysForSelfReflection; d++) {
                             // TODO: 予定を立てられるようにする
@@ -136,6 +149,41 @@ function checkChemistry(a, b, day) {
                     user.lastSelfReflectedAt = date;
                     user.save();
                 }
+
+                // 予定（タスク）の実施報告
+                let UsersWorks = await user.getWorks();
+                for(let w of UsersWorks){
+                    let tasks = await user.getTasks(w);
+                    for(let task of tasks){
+                        if(dayjs(task.start_time).format('YYYY-MM-DD') !== dayjs(date).format('YYYY-MM-DD')){
+                            continue;
+                        }
+
+                        // reschedule test -----
+                        if (cnt == 0){
+                            const new_start = dayjs(task.start_time).add(12,'h');
+                            const new_end = dayjs(task.end_time).add(12,'h');
+                            task.reschedule(new_start,new_end);
+                            cnt = 1;
+                            continue;
+                        }
+                            // TODO: 新タスクが当日中だとforeachで拾えないので対策が必要
+
+                        // reschedule test -----
+
+                        // 時間をタスクの開始・終了時間まで進める
+                        process.env['FAKETIME'] = dayjs(task.start_time).format('YYYY-MM-DD HH:mm:ss');
+                        task.open(task.start_time);
+                        console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に開始しました．');
+
+                        process.env['FAKETIME'] = dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
+                        task.close(task.end_time);
+                        console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
+                    }
+                }
+                // 時間を元に戻す
+                process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');
+                
             }
             date = date.add(1, 'day');  // 1日進める
         }
