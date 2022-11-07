@@ -1,4 +1,4 @@
-if [ "$(uname)" == 'Darwin' ]; then
+if [ "$(uname)" = 'Darwin' ]; then
 	export DYLD_FORCE_FLAT_NAMESPACE=1
 	export DYLD_INSERT_LIBRARIES=/opt/homebrew/lib/faketime/libfaketime.1.dylib
 fi
@@ -11,7 +11,7 @@ export FAKETIME_NO_CACHE=1
 
 # シミュレーションの実行
 # -- 過去のシミュレーション結果を削除し，2020年1月1日から365日間のシミュレーションを行う
-node simulate.js --init 2020-01-01 -d 3
+node simulate.js --init 2020-01-01 -d 5
 
 # シミュレーションの実行
 # -- 過去のシミュレーションの続きとして1000日間のシミュレーションを行う

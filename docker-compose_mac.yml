@@ -1,0 +1,17 @@
+version: '3'
+services:
+    app:
+        build:
+            context: "./"
+            dockerfile: "Dockerfile_mac"
+        volumes:
+            - ./app:/app:delegated # delegatedオプション パフォーマンスを少し向上する
+        ports:
+            - "3000:3000"
+        tty: true
+        environment:
+            - DEBUG=app:*
+        # この2行で日時を設定
+            - LD_PRELOAD=/usr/local/lib/faketime/libfaketimeMT.so.1
+
+        command: sh -c "npm install && /bin/sh"
