@@ -1,6 +1,6 @@
 setdate="2020-01-01"
 settime="00:00:00"
-if [ "$(uname)" == 'Darwin' ]; then
+if [ "$(uname)" = 'Darwin' ]; then
 	export DYLD_FORCE_FLAT_NAMESPACE=1
 	export DYLD_INSERT_LIBRARIES=/opt/homebrew/lib/faketime/libfaketime.1.dylib
 else
