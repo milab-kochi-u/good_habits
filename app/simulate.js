@@ -85,7 +85,8 @@ function checkChemistry(a, b, day) {
         // TODO: schemeの割当をする
 
         // reschedule test -----
-        let cnt = 0;
+        // let cnt = 0;
+
         // reschedule test -----
 
         for (let day = 0; day < argv.days; day++) {
@@ -99,7 +100,8 @@ function checkChemistry(a, b, day) {
             for (let user of users) {
                 if (user.startDays > passedDays) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
-                // ワークの決定
+                // ワーク未決定の場合，決める
+
                 if (addedWorks.length < 1) {
                     console.log('    ', user.name, 'が利用開始します');
                     let maxChemistry = -1;
@@ -120,6 +122,9 @@ function checkChemistry(a, b, day) {
                 // TODO: 工夫の決定
 
                 // TODO: 予定の実施結果を記録できるようにする
+
+                // 次の振り返り日を決める
+
                 let nextSelfReflected = dayjs(date).subtract(1, 'day');
                 if (user.lastSelfReflectedAt !== null && dayjs(user.lastSelfReflectedAt).isValid()) {
                     nextSelfReflected = dayjs(user.lastSelfReflectedAt).add(user.intervalDaysForSelfReflection, 'day');
@@ -160,26 +165,34 @@ function checkChemistry(a, b, day) {
                         }
 
                         // reschedule test -----
-                        if (cnt == 0){
-                            const new_start = dayjs(task.start_time).add(12,'h');
-                            const new_end = dayjs(task.end_time).add(12,'h');
-                            task.reschedule(new_start,new_end);
-                            cnt = 1;
-                            continue;
-                        }
+                        // if (cnt == 0){
+                        //     const new_start = dayjs(task.start_time).add(12,'h');
+                        //     const new_end = dayjs(task.end_time).add(12,'h');
+                        //     task.reschedule(new_start,new_end);
+                        //     cnt = 1;
+                        //     continue;
+                        // }
                             // TODO: 新タスクが当日中だとforeachで拾えないので対策が必要
-
-                        // reschedule test -----
+                        // ----- end reschedule test -----
 
                         // 時間をタスクの開始・終了時間まで進める
+                        // TODO : もっと現実性を持たせる　（実施できなかったとか）
                         process.env['FAKETIME'] = dayjs(task.start_time).format('YYYY-MM-DD HH:mm:ss');
-                        task.open(task.start_time);
-                        console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に開始しました．');
 
-                        process.env['FAKETIME'] = dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
-                        task.close(task.end_time);
-                        console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
-                    }
+                        // 当日にユーザがタスクを実施するかどうかを決める
+                        let wheterDo = checkChemistry(user,w,passedDays);
+                        console.log('           ',user.name, 'さんの本日のやる気：', wheterDo);
+                        if (wheterDo <= 0.5){
+                            console.log('           ', '本日はサボりました...');
+                        }else{
+                            task.open(task.start_time);
+                            console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に開始しました．');
+
+                            process.env['FAKETIME'] = dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
+                            task.close(task.end_time);
+                            console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
+                        }
+     }
                 }
                 // 時間を元に戻す
                 process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');
