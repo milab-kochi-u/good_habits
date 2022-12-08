@@ -27,6 +27,7 @@ exec_simulation(){
 	node simulate.js --init "${setdate}" -d 5
 }
 
+
 # シミュレーションの実行
 # -- 過去のシミュレーションの続きとして1000日間のシミュレーションを行う
 # node simulate.js -d 335
@@ -70,4 +71,5 @@ fi
 export FAKETIME_NO_CACHE=1
 
 exec_simulation
+
 

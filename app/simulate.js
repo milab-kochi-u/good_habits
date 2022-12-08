@@ -86,6 +86,7 @@ function checkChemistry(a, b, day) {
 
         // reschedule test -----
         // let cnt = 0;
+
         // reschedule test -----
 
         for (let day = 0; day < argv.days; day++) {
@@ -100,6 +101,7 @@ function checkChemistry(a, b, day) {
                 if (user.startDays > passedDays) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
                 // ワーク未決定の場合，決める
+
                 if (addedWorks.length < 1) {
                     console.log('    ', user.name, 'が利用開始します');
                     let maxChemistry = -1;
@@ -122,6 +124,7 @@ function checkChemistry(a, b, day) {
                 // TODO: 予定の実施結果を記録できるようにする
 
                 // 次の振り返り日を決める
+
                 let nextSelfReflected = dayjs(date).subtract(1, 'day');
                 if (user.lastSelfReflectedAt !== null && dayjs(user.lastSelfReflectedAt).isValid()) {
                     nextSelfReflected = dayjs(user.lastSelfReflectedAt).add(user.intervalDaysForSelfReflection, 'day');
@@ -189,7 +192,7 @@ function checkChemistry(a, b, day) {
                             task.close(task.end_time);
                             console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
                         }
-                    }
+     }
                 }
                 // 時間を元に戻す
                 process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');
