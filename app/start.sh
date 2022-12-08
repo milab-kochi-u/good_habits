@@ -1,11 +1,24 @@
+error="error: 引数が正しくありません．start.sh -h を実行し，引数を確認してください．"
+
 setdate="2020-01-01"
 settime="00:00:00"
 
+FLAG_GENERATEDATA=1
+FLAG_READDATA=1
+FLAG_SIMULATE=1
+
 help(){
 cat << EOS
-ヘルプテスト）こんにちは
+ヘルプ）こんにちは
+
+使い方：
+-h or --help：
+	当プログラムの説明を表示します．
+-i or --init [YYYY-MM-DD]：
+	日付形式を指定し，その日付からシミュレーションを開始します．
 EOS
 }
+
 
 dateinit(){
 	setdate="$1"
@@ -49,11 +62,22 @@ do
 	case "-$opt" in
 		-h|--help)
 			help
-			shift
+			exit 0
 			;;
 		-i|--init)
+			${optarg:?"${error}"}
 			dateinit $optarg
 			shift
+			;;
+		--)
+			break
+			;;
+		-\?)
+			exit 1
+			;;
+		--*)
+			echo "$0: illegal option -- ${opt##-}" >&2
+			exit 1
 			;;
 	esac
 done
