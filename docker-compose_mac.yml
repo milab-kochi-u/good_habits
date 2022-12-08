@@ -1,9 +1,11 @@
 version: '3'
 services:
     app:
-        build: .
+        build:
+            context: "./"
+            dockerfile: "Dockerfile_mac"
         volumes:
-            - ./app:/app
+            - ./app:/app:delegated # delegatedオプション パフォーマンスを少し向上する
         ports:
             - "3000:3000"
         tty: true

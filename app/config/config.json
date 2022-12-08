@@ -1,0 +1,18 @@
+{
+  "development": {
+    "logging": false,
+    "database": "db-development",
+    "dialect": "sqlite",
+    "storage": "db-dev.sqlite3"
+  },
+  "test": {
+    "database": "db-test",
+    "dialect": "sqlite",
+    "storage": "db-test.sqlite3"
+  },
+  "production": {
+    "database": "db-product",
+    "dialect": "sqlite",
+    "storage": "db-product.sqlite3"
+  }
+}
