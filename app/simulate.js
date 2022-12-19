@@ -100,8 +100,8 @@ function checkChemistry(a, b, day) {
             for (let user of users) {
                 if (user.startDays > passedDays) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
-                // ワーク未決定の場合，決める
 
+                // ワークが未決定なら決定する
                 if (addedWorks.length < 1) {
                     console.log('    ', user.name, 'が利用開始します');
                     let maxChemistry = -1;
@@ -117,9 +117,20 @@ function checkChemistry(a, b, day) {
                     console.log('       ', user.name, 'は', selectedWork.label, 'を継続させたいワークに設定します');
                     await user.addWork(selectedWork);
                     addedWorks = await user.getWorks();
+                    maxChemistry = -1;
+                    let selectedScheme = null;
+                    // 工夫を決める
+                    for(let scheme of schemes){
+                        const chemistry = round(checkChemistry(selectedWork,scheme,passedDays));
+                        if(chemistry > maxChemistry){
+                            selectedScheme = scheme;
+                            maxChemistry = chemistry;
+                        }
+                    }
+                    console.log('       ', user.name, 'は工夫「',selectedScheme.label,'」を採用します．');
+                    await user.addScheme({work: selectedWork, scheme: selectedScheme});
                 }
 
-                // TODO: 工夫の決定
 
                 // TODO: 予定の実施結果を記録できるようにする
 

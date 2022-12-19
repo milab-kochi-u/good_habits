@@ -7,5 +7,8 @@
   <body>
     <h1><%= title %></h1>
     <p>Welcome to <%= title %></p>
+    <% for (var user of users) {  %>
+      <p><%= user.name %></p>
+    <% } %>
   </body>
 </html>

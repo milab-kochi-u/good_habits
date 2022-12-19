@@ -65,7 +65,7 @@ do
 			exit 0
 			;;
 		-i|--init)
-			${optarg:?"${error}"}
+			_=${optarg:?"${error}"}
 			dateinit $optarg
 			shift
 			;;
@@ -94,6 +94,5 @@ fi
 # FAKETIME_NO_CACHEが0の場合，環境変数FAKETIME変更時の反映に少し時間がかかる為
 export FAKETIME_NO_CACHE=1
 
+# if [ $FLAG_GENERATEDATA -eq 1 ];then
 exec_simulation
-
-
