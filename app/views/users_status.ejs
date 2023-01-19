@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <div class="m-4 p-4">
+      <div class="py-4 text-2xl text-green-500">
+        <h1><%= title %>!</h1>
+        <p>Welcome to <%= title %></p>
+      </div>
+      <div class="m-2"><a class="py-2 px-4 font-bold bg-gray-300 hover:bg-gray-200 border-b-4 border-gray-400 hover:border-gray-300 rounded" href="<%= link.parent %>">戻る</a></div>
+      <!-- 日毎のタスク設定グラフ -->
+      <div class="m-4 p-4 w-3/5 border-4 border-gray-300 rounded">
+        <canvas id="myChart"></canvas>
+      </div>
+      <!-- 周期関数のグラフを表示 -->
+    </div>
+
+    <!-- script -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+
+    <script>
+      const ctx = document.getElementById('myChart');
+      data = [];
+      <% for(var i = 0; i < data.graph_data.length; i++){ %>
+        data[<%= i %>] = {x: "<%= data.graph_data[i].x %>", y: "<%= data.graph_data[i].y %>"}
+      <% } %>
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          datasets: [{
+            label: '達成したタスク',
+            data: data
+          }],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: '日毎のタスク達成数',
+            },
+          },
+          scales: {
+            y: {
+              // 小数点を隠す
+              ticks:{
+                precision: 0,
+              },
+              beginAtZero: true,
+              suggestedMax: 5,
+            }
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

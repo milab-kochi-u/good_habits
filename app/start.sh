@@ -37,7 +37,7 @@ read_dummydata(){
 # シミュレーションの実行
 exec_simulation(){
 	# -- 過去のシミュレーション結果を削除し，2020年1月1日から365日間のシミュレーションを行う
-	node simulate.js --init "${setdate}" -d 5
+	node simulate.js --init "${setdate}" -d 10
 }
 
 
