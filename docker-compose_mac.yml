@@ -5,7 +5,10 @@ services:
             context: "./"
             dockerfile: "Dockerfile_mac"
         volumes:
-            - ./app:/app:delegated # delegatedオプション パフォーマンスを少し向上する
+            # マウントの高速化
+            - ./app:/app
+            # Volume Trick
+            - exclude_node_modules:/app/node_modules
         ports:
             - "3000:3000"
             - "3001:3001"
@@ -13,7 +16,11 @@ services:
         tty: true
         environment:
             - DEBUG=app:*
-        # この2行で日時を設定
+            # nodemonがファイル変更を検知するために必要
+            - CHOKIDAR_USEPOLLING=1
+            # この2行で日時を設定
             - LD_PRELOAD=/usr/local/lib/faketime/libfaketimeMT.so.1
 
-        command: /bin/sh -c "npm install && npm run start-dev"
+        command: /bin/sh -c "npm run start-dev"
+volumes:
+    exclude_node_modules:

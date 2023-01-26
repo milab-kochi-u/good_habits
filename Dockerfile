@@ -16,6 +16,8 @@ RUN git clone https://github.com/wolfcw/libfaketime.git
 WORKDIR /libfaketime/src
 RUN make install
 
-RUN npm install -g express-generator
-USER node
 WORKDIR /app
+COPY app/package*.json ./
+RUN npm install -g express-generator
+RUN npm install
+USER node
