@@ -6,10 +6,10 @@ ENTRYPOINT ["/sbin/tini", "--"]
 
 WORKDIR /
 
+RUN apk add sqlite sqlite-dev git make gcc libc-dev bash
 RUN apk fix
 RUN apk update
 RUN apk upgrade
-RUN apk add sqlite sqlite-dev git make gcc libc-dev
 
 # テスト時にシステム時刻を固定化するためのlibfaketimeをインストール
 RUN git clone https://github.com/wolfcw/libfaketime.git
