@@ -10,9 +10,12 @@ function round(num, digits = numberOfSignificantDigits) {
 }
 
 // a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
+// TODO: 現在は日毎に計算しているのみであるが，日毎の値もDBに登録しておきたい．
 function checkChemistry(a, b, day) {
-	const aPhase = Math.sin(Math.PI * 2 * (day / (24 - a['waveLength'] % 10)) - a['initialPhase']);
-	const bPhase = Math.sin(Math.PI * 2 * (day / (24 - b['waveLength'] % 10)) - b['initialPhase']);
+	const aPhase = Math.sin(Math.PI * 2 * (day / (24 - a['waveLength'])) - a['initialPhase']);
+	const bPhase = Math.sin(Math.PI * 2 * (day / (24 - b['waveLength'])) - b['initialPhase']);
+    // console.log((a.name ? a.name : a.label), ' aPhase=', aPhase);
+    // console.log((b.name ? b.name : b.label), ' bPhase=', bPhase);
 	return 1.0 - Math.abs(aPhase - bPhase) / 2;
 }
 
@@ -82,7 +85,6 @@ function checkChemistry(a, b, day) {
         const users = await models.User.findAll();
         const works = await models.Work.findAll();
         const schemes = await models.Scheme.findAll();
-        // TODO: schemeの割当をする
 
         // reschedule test -----
         // let cnt = 0;
@@ -109,7 +111,6 @@ function checkChemistry(a, b, day) {
                     for (let work of works) {
                         // TODO: ワークを決める際にカテゴリの相性を考慮する
                         const chemistry = round(checkChemistry(user, work, passedDays));
-                        // console.log(user.name, 'と', work.label, 'の相性(checkChemistry):', chemistry);
                         if (chemistry > maxChemistry) {
                             selectedWork = work;
                             maxChemistry = chemistry;
@@ -204,7 +205,7 @@ function checkChemistry(a, b, day) {
                             task.close(task.end_time);
                             console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
                         }
-     }
+                    }
                 }
                 // 時間を元に戻す
                 process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');

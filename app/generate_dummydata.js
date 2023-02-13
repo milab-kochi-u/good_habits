@@ -3,12 +3,15 @@ const seed = 1;	// 乱数のシード値
 const rangeOfInitialMotivation = [30, 80];	// 動機の高さ (0〜1) の初期値の範囲（×100）（30 → 実際は 0.3）
 const rangeOfThresholdOfWorkChanging = [0, 5];	// ワークを変更する閾値の範囲（×100）（30 → 実際は 0.3）
 // const rangeOfThresholdOfSchemeChanging = [0, 20];	// 工夫を変更する閾値の範囲（×100）（30 → 実際は 0.3）
-const rangeOfCycleDays = [25, 1000];	// 波長の周期の日数の範囲
-const rangeOfCycleHours = { 'user': [0, 8], 'work': [8, 16], 'scheme': [16, 24] };	// 24時間を3等分
+const rangeOfCycleDays = [-10,10];	// 波長の周期の日数の範囲
+// const rangeOfCycleHours = { 'user': [0, 8], 'work': [8, 16], 'scheme': [16, 24] };	// 24時間を3等分
+
+// TODO:乱数の出力は整数であり，日数単位として扱っているので，今後時間単位の乱数として扱いたい
+
 const numberOfCategories = 3;	// 1 にする場合は possibilityOfMultiCategory は 0 にすること
-const numberOfUsers = 100;
-const numberOfWorks = 50;
-const numberOfSchemes = 80;
+const numberOfUsers = 5;
+const numberOfWorks = 5;
+const numberOfSchemes = 10;
 const possibilityOfMultiCategory = 0.3;	// 複数のカテゴリにまたがる可能性
 const numberOfSignificantDigits = 2	// 有効桁数（乱数などの実数値の小数点以下の桁数が長くなりすぎるため）
 const numberOfDaysForExperiment = 365 * 0.5;	// 実験期間の日数
@@ -52,11 +55,11 @@ function round(num, digits = numberOfSignificantDigits) {
 }
 
 // a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
-function checkChemistry(a, b, day) {
-	const aPhase = Math.sin(Math.PI * 2 * (day * 24 - a['initialPhase']) / a['waveLength']);
-	const bPhase = Math.sin(Math.PI * 2 * (day * 24 - b['initialPhase']) / b['waveLength']);
-	return 1.0 - Math.abs(aPhase - bPhase) / 2;
-}
+// function checkChemistry(a, b, day) {
+// 	const aPhase = Math.sin(Math.PI * 2 * (day * 24 - a['initialPhase']) / a['waveLength']);
+// 	const bPhase = Math.sin(Math.PI * 2 * (day * 24 - b['initialPhase']) / b['waveLength']);
+// 	return 1.0 - Math.abs(aPhase - bPhase) / 2;
+// }
 
 // 各カテゴリの優先度を決める（優先度: 0〜1, 大きいほど優先権が高い，相性度と乗算して利用する）
 function decidePriorityOfCategories() {
@@ -85,7 +88,8 @@ Math.random.seed(seed);
 const categories = [];
 const cateDigits = parseInt(Math.log10(numberOfCategories)) + 1;
 for (let i = 0; i < numberOfCategories; i++) {
-	const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt([0, 24]);
+	// const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt([0, 24]);
+	const waveLength = getRandomInt(rangeOfCycleDays);
 	const initialPhase = 0;
 	const num = ('0'.repeat(cateDigits) + (i+1)).slice(-1 * cateDigits);
 	const category = {
@@ -102,7 +106,8 @@ const works = [];
 const workDigits = parseInt(Math.log10(numberOfWorks)) + 1;
 for (let i = 0; i < numberOfWorks; i++) {
 	const num = ('0'.repeat(workDigits) + (i+1)).slice(-1 * workDigits);
-	const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['work']);
+	// const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['work']);
+	const waveLength = getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const work = {
@@ -120,7 +125,8 @@ const schemes = [];
 const schemeDigits = parseInt(Math.log10(numberOfSchemes)) + 1;
 for (let i = 0; i < numberOfSchemes; i++) {
 	const num = ('0'.repeat(schemeDigits) + (i+1)).slice(-1 * schemeDigits);
-	const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['scheme']);
+	// const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['scheme']);
+	const waveLength = getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const scheme = {
@@ -138,7 +144,8 @@ const users = [];
 const userDigits = parseInt(Math.log10(numberOfUsers)) + 1;
 for (let i = 0; i < numberOfUsers; i++) {
 	const num = ('0'.repeat(userDigits) + (i+1)).slice(-1 * userDigits);
-	const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['user']);
+	// const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['user']);
+	const waveLength = getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const startDays = getRandomInt([0, numberOfDaysForExperiment / 3]);

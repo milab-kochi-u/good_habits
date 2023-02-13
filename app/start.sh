@@ -26,10 +26,10 @@ date_validate(){
 	readonly _IS_DATECMD=$([ "$?" -eq 0 ] && echo "GNU" || echo "BSD") # judge (likes ternary operator)
 	echo "[NOTICE] You are using ${_IS_DATECMD} cmd." >&2
 	if [ "$_IS_DATECMD" = "GNU" ]; then
-        # GNU date
-        (date --date "$1") > /dev/null 2>&1 || res=1
+		# GNU date
+		(date --date "$1") > /dev/null 2>&1 || res=1
 	else
-        # BSD date
+		# BSD date
 		(date -j -f '%Y/%m/%d' "$1") > /dev/null 2>&1 || (date -j -f '%Y-%m-%d' "$1") > /dev/null 2>&1 || res=1
 	fi
     return $res
@@ -83,6 +83,7 @@ while [[ $# -gt 0 ]]; do
 					;;
 				*) 
 					if ! date_validate $2 ; then echo "[ERROR] $1 parameter must be in date format." ; exit 1 ; fi
+					if [[ "$2" =~ ([a-zA-Z]+) ]]; then echo "[ERROR] $1 parameter must be in date format." ; exit 1 ; fi
 					SETDATE=$2 ; shift ; shift
 					;;
 			esac
@@ -96,6 +97,10 @@ while [[ $# -gt 0 ]]; do
 		# ---- flag options ----
 		--no-sim)
 			FLAG_SIMULATE="NO" ; shift
+			;;
+		--data-gen)
+			FLAG_GENERATEDATA="YES"
+			FLAG_READDATA="YES" ; shift
 			;;
 		--help)
 			help ; shift
@@ -126,8 +131,6 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-if [[ $FLAG_SIMULATE = "YES" ]]; then exec_simulation ; fi
-
 if [ "$(uname)" = 'Darwin' ]; then
 	export DYLD_FORCE_FLAT_NAMESPACE=1
 	export DYLD_INSERT_LIBRARIES=/opt/homebrew/lib/faketime/libfaketime.1.dylib
@@ -137,5 +140,9 @@ else
 fi
 # FAKETIME_NO_CACHEが0の場合，環境変数FAKETIME変更時の反映に少し時間がかかる為
 export FAKETIME_NO_CACHE=1
+
+if [[ $FLAG_GENERATEDATA = "YES" ]]; then generate_dummydata ; fi
+if [[ $FLAG_READDATA = "YES" ]]; then read_dummydata ; fi
+if [[ $FLAG_SIMULATE = "YES" ]]; then exec_simulation ; fi
 
 exit 0

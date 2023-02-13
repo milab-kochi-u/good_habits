@@ -1,7 +1,7 @@
 <%- include('partials/header'); %>
 
 <div class="m-4 p-7">
-  <ul class="w-[26rem] [&>li]:p-2 [&>li]:border-b-4">
+  <ul class="w-[27.5rem] [&>li]:p-2 [&>li]:border-b-4">
     <li>前回のシミュレーション実行時刻: <b><%= func.ddate(logs.updatedAt) %></b></li>
     <li>simulating date: <b><%= func.ddate(logs.startedAt) + " ～ " + func.ddate(logs.finishedAt) %></b></li>
   </ul>
@@ -25,7 +25,7 @@
         <label for="days" class="text-sm mr-2">期間</label>
         <input type="date" class="outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" value="2020-01-01" required>
       </div>
-      <div class="blcok mt-4">
+      <div class="blcok mt-4 h-12">
         <button type='submit' class="back_btn1">実行</button>
       </div>
     </div>
