@@ -4,6 +4,6 @@
 
 @layer components{
   .back_btn1{
-    @apply shadow-lg m-3 p-3 font-bold bg-gray-300 hover:bg-gray-200 border-b-4 border-gray-400 hover:border-b-2 hover:border-gray-300 hover:translate-y-0.5 transform transition rounded
+    @apply shadow-lg p-3 font-bold bg-gray-300 hover:bg-gray-200 border-b-4 border-gray-400 hover:border-b-2 hover:border-gray-300 hover:translate-y-0.5 transform transition rounded
   }
 }

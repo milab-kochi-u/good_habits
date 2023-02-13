@@ -1,7 +1,9 @@
 <%- include('partials/header'); %>
 
 <div class="m-4 p-4">
-  <a class="back_btn1" href="<%= link.parent %>">戻る</a>
+  <div class="h-12">
+    <a class="inline-block back_btn1" href="<%= link.parent %>">戻る</a>
+  </div>
   <!-- 日毎のタスク設定グラフ -->
   <div class="m-4 p-4 w-3/5 border-4 border-gray-300 rounded">
     <canvas id="myChart"></canvas>

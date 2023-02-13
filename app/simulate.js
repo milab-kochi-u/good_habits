@@ -11,8 +11,8 @@ function round(num, digits = numberOfSignificantDigits) {
 
 // a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
 function checkChemistry(a, b, day) {
-	const aPhase = Math.sin(Math.PI * 2 * (day * 24 - a['initialPhase']) / a['waveLength']);
-	const bPhase = Math.sin(Math.PI * 2 * (day * 24 - b['initialPhase']) / b['waveLength']);
+	const aPhase = Math.sin(Math.PI * 2 * (day / (24 - a['waveLength'] % 10)) - a['initialPhase']);
+	const bPhase = Math.sin(Math.PI * 2 * (day / (24 - b['waveLength'] % 10)) - b['initialPhase']);
 	return 1.0 - Math.abs(aPhase - bPhase) / 2;
 }
 
@@ -109,6 +109,7 @@ function checkChemistry(a, b, day) {
                     for (let work of works) {
                         // TODO: ワークを決める際にカテゴリの相性を考慮する
                         const chemistry = round(checkChemistry(user, work, passedDays));
+                        // console.log(user.name, 'と', work.label, 'の相性(checkChemistry):', chemistry);
                         if (chemistry > maxChemistry) {
                             selectedWork = work;
                             maxChemistry = chemistry;
