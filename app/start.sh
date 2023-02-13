@@ -10,18 +10,20 @@ help(){
 	    当プログラムの説明を表示します．
 	-i or --init [YYYY-MM-DD]：
 	    日付形式を指定し，その日付からシミュレーションを開始します．
-	-D or --Day [int]:
-		シミュレーションの期間を設定します．
+	-D or --Day [integer]:
+	    シミュレーションの期間を設定します．
 	--no-sim:
-		シミュレーションを実行しません．
+	    シミュレーションを実行しません．
+	--data-gen:
+	    プロファイルを再作成します．
 	EOS
 	exit 0
 }
 
 date_validate(){
-    # dateコマンドの引数の値が有効であれば0,そうでなければ1を返す
+	# dateコマンドの引数の値が有効であれば0,そうでなければ1を返す
 	#https://qiita.com/ma2shita/items/d322463352fa01d776c8
-    res=0 # result value (0 is succeeded)
+	res=0 # result value (0 is succeeded)
 	date -d 0hour > /dev/null 2>&1 # inspect
 	readonly _IS_DATECMD=$([ "$?" -eq 0 ] && echo "GNU" || echo "BSD") # judge (likes ternary operator)
 	echo "[NOTICE] You are using ${_IS_DATECMD} cmd." >&2
