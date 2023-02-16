@@ -1,4 +1,7 @@
 'use strict';
+
+const e = require("express");
+
 module.exports = (sequelize, DataTypes) => {
 
   // ユーザ
@@ -45,18 +48,31 @@ module.exports = (sequelize, DataTypes) => {
     return task;
   }
 
-  User.prototype.getTasks = async function(work) {
-    const myWorks = await this.getUsersWorks({
-      where: { WorkId: work.id },
-    });
-    if (myWorks.length != 1) return null;
-    // let res = await myWorks[0].getTasks({
-    //   include: { all: true, nested: true }
-    // });
-    return await myWorks[0].getTasks({
-      order: [['start_time', 'ASC']]
-    });
+  User.prototype.getTasks = async function(work, wh={}) {
+    let myWorks;
+    if(work === undefined){
+      const myUsersWorks = await this.getUsersWorks();
+      if (myUsersWorks.length != 1) return null;
+      const myTasks = {};
+      for(let uw of myUsersWorks){
+        const myW = await uw.getWork();
+        myTasks[myW.label] = await uw.getTasks({
+          order: [['start_time', 'ASC']],
+          where: wh,
+        });
+      }
+      return myTasks;
+    }else{
+      myWorks = await this.getUsersWorks({
+        where: { WorkId: work.id },
+      });
+      if (myWorks.length != 1) return null;
+      return await myWorks[0].getTasks({
+        where: wh,
+        order: [['start_time', 'ASC']],
+      });
+    }
   }
-  
+
   return User;
 };

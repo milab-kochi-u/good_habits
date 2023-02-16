@@ -3,6 +3,7 @@ const dayjs = require('dayjs');
 const yargs = require('yargs');
 const user = require('./models/user.js');
 const numberOfSignificantDigits = 2;    // 有効桁数
+const { Op } = require("sequelize");
 
 // 有効数字に丸める
 function round(num, digits = numberOfSignificantDigits) {
@@ -17,6 +18,38 @@ function checkChemistry(a, b, day) {
     // console.log((a.name ? a.name : a.label), ' aPhase=', aPhase);
     // console.log((b.name ? b.name : b.label), ' bPhase=', bPhase);
 	return 1.0 - Math.abs(aPhase - bPhase) / 2;
+}
+
+// Userと相性の良いWork,Schemeを返す
+async function getGoodWork(user,work){
+
+}
+async function getGoodScheme(user,scheme){
+
+}
+
+// 期間内のタスク実施結果を返す
+// 返り値: {"taskCount": 7, "successStart": 5, "successFinish": 4}
+async function resultsOfTask(user, work, date, dayCount) {
+    // let works = user.getWorks();
+    // for (let work of works) {
+    //     let tasks = user.getTasks(work);
+    // }
+    let startTime = dayjs(date).subtract(dayCount, 'day');
+    const wh = {
+        [Op.and]: [
+            { start_time: { [Op.gte]: startTime.toDate() } },
+            { finished_at: { [Op.lt]: date.toDate() } }
+        ]
+    };
+    let tasks = await user.getTasks(work, wh);
+    console.log(startTime.format('YYYY-MM-DD'), date.format('YYYY-MM-DD'), user.name, work.label, tasks);
+    return {
+        'taskCount': tasks.length,
+        'successStart': tasks.filter(task => task.started_at != null).length,  // start_at が null じゃない回数
+        'successFinish': tasks.filter(task => task.finished_at != null).length, // finish_at が null じゃない回数
+        'successResult': tasks.filter(task => task.result == true).length, // result = True の回数
+    }
 }
 
 (async() => {
@@ -133,7 +166,6 @@ function checkChemistry(a, b, day) {
                     await user.addScheme({work: selectedWork, scheme: selectedScheme});
                 }
 
-
                 // TODO: 予定の実施結果を記録できるようにする
 
                 // 次の振り返り日を決める
@@ -143,12 +175,17 @@ function checkChemistry(a, b, day) {
                     nextSelfReflected = dayjs(user.lastSelfReflectedAt).add(user.intervalDaysForSelfReflection, 'day');
                 }
 
-                // 予定の振り返り（タスク登録）
+                // 予定の振り返り（タスク登録
                 if (nextSelfReflected.diff(date, 'day') < 1) {
                     console.log('        ', user.name, 'が振り返ります');
+                    // TODO: 今までの履歴も振り返る
+                    // TODO: 実施率を見て工夫を変えるかどうか選択する
+                    let tasks_to_date = await user.getTasks();
+                    console.log(await resultsOfTask(user,addedWorks[0], date, 7));
+
                     // TODO: ワークを変更するかを検討し，変更する場合は変更できるようにする
                     // TODO: 複数のワークを設定できるようにする
-                    // TODO: 工夫を変更するかを検討し，変更する場合は変更できるようにする
+
                     // TODO: 複数の工夫を設定できるようにする
                     // TODO: 時間もまばらにする（全部19:00になってる）
                     for (addedWork of addedWorks) {

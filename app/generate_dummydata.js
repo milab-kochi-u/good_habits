@@ -10,8 +10,8 @@ const rangeOfCycleDays = [-10,10];	// 波長の周期の日数の範囲
 
 const numberOfCategories = 3;	// 1 にする場合は possibilityOfMultiCategory は 0 にすること
 const numberOfUsers = 5;
-const numberOfWorks = 5;
-const numberOfSchemes = 10;
+const numberOfWorks = 1;
+const numberOfSchemes = 100;
 const possibilityOfMultiCategory = 0.3;	// 複数のカテゴリにまたがる可能性
 const numberOfSignificantDigits = 2	// 有効桁数（乱数などの実数値の小数点以下の桁数が長くなりすぎるため）
 const numberOfDaysForExperiment = 365 * 0.5;	// 実験期間の日数
