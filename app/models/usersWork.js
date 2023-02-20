@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
     UsersWork.belongsTo(models.User);
 
     UsersWork.hasMany(models.Task);
+    UsersWork.hasMany(models.UsersScheme);
   };
   return UsersWork;
 };

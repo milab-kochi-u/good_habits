@@ -21,29 +21,33 @@ function checkChemistry(a, b, day) {
 }
 
 // Userと相性の良いWork,Schemeを返す
-async function getGoodWork(user,work){
-
-}
-async function getGoodScheme(user,scheme){
-
+function getGoodWorS(user,all_WorS,passedDays){
+    // TODO: ワークを決める際にカテゴリの相性を考慮する
+    let maxChemistry = -1;
+    let selectedWorS = null;
+    for(let WorS of all_WorS){
+        const chemistry = round(checkChemistry(user,WorS,passedDays));
+        if(chemistry > maxChemistry){
+            selectedWorS = WorS;
+            maxChemistry = chemistry;
+        }
+    }
+    return selectedWorS;
 }
 
 // 期間内のタスク実施結果を返す
 // 返り値: {"taskCount": 7, "successStart": 5, "successFinish": 4}
 async function resultsOfTask(user, work, date, dayCount) {
-    // let works = user.getWorks();
-    // for (let work of works) {
-    //     let tasks = user.getTasks(work);
-    // }
     let startTime = dayjs(date).subtract(dayCount, 'day');
     const wh = {
         [Op.and]: [
             { start_time: { [Op.gte]: startTime.toDate() } },
-            { finished_at: { [Op.lt]: date.toDate() } }
+            { end_time: { [Op.lt]: date.toDate() } }
         ]
     };
     let tasks = await user.getTasks(work, wh);
-    console.log(startTime.format('YYYY-MM-DD'), date.format('YYYY-MM-DD'), user.name, work.label, tasks);
+    // console.log(startTime.format('YYYY-MM-DD'), date.format('YYYY-MM-DD'), user.name, work.label, tasks);
+    // WARN: 現在はresultの値はタスクを開始した時点で1にしているのであまり当てにしない
     return {
         'taskCount': tasks.length,
         'successStart': tasks.filter(task => task.started_at != null).length,  // start_at が null じゃない回数
@@ -133,37 +137,21 @@ async function resultsOfTask(user, work, date, dayCount) {
             console.log('  シミュレーション開始から', passedDays, '日経過');
 
             for (let user of users) {
-                if (user.startDays > passedDays) continue;  // まだ利用を始めていない
+                if (user.startDays > day+1) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
 
                 // ワークが未決定なら決定する
                 if (addedWorks.length < 1) {
                     console.log('    ', user.name, 'が利用開始します');
-                    let maxChemistry = -1;
-                    let selectedWork = null;
-                    for (let work of works) {
-                        // TODO: ワークを決める際にカテゴリの相性を考慮する
-                        const chemistry = round(checkChemistry(user, work, passedDays));
-                        if (chemistry > maxChemistry) {
-                            selectedWork = work;
-                            maxChemistry = chemistry;
-                        }
-                    }
+                    let selectedWork = getGoodWorS(user,works,passedDays);
                     console.log('       ', user.name, 'は', selectedWork.label, 'を継続させたいワークに設定します');
                     await user.addWork(selectedWork);
-                    addedWorks = await user.getWorks();
-                    maxChemistry = -1;
-                    let selectedScheme = null;
+
                     // 工夫を決める
-                    for(let scheme of schemes){
-                        const chemistry = round(checkChemistry(selectedWork,scheme,passedDays));
-                        if(chemistry > maxChemistry){
-                            selectedScheme = scheme;
-                            maxChemistry = chemistry;
-                        }
-                    }
+                    let selectedScheme = getGoodWorS(user,schemes,passedDays);
                     console.log('       ', user.name, 'は工夫「',selectedScheme.label,'」を採用します．');
                     await user.addScheme({work: selectedWork, scheme: selectedScheme});
+                    addedWorks = await user.getWorks();
                 }
 
                 // TODO: 予定の実施結果を記録できるようにする
@@ -178,10 +166,6 @@ async function resultsOfTask(user, work, date, dayCount) {
                 // 予定の振り返り（タスク登録
                 if (nextSelfReflected.diff(date, 'day') < 1) {
                     console.log('        ', user.name, 'が振り返ります');
-                    // TODO: 今までの履歴も振り返る
-                    // TODO: 実施率を見て工夫を変えるかどうか選択する
-                    let tasks_to_date = await user.getTasks();
-                    console.log(await resultsOfTask(user,addedWorks[0], date, 7));
 
                     // TODO: ワークを変更するかを検討し，変更する場合は変更できるようにする
                     // TODO: 複数のワークを設定できるようにする
@@ -189,6 +173,18 @@ async function resultsOfTask(user, work, date, dayCount) {
                     // TODO: 複数の工夫を設定できるようにする
                     // TODO: 時間もまばらにする（全部19:00になってる）
                     for (addedWork of addedWorks) {
+                        // TODO: 今までの履歴も振り返る
+                        // TODO: 実施率を見て工夫を変えるかどうか選択する
+                        const history = await resultsOfTask(user,addedWork, date, 7);
+                        console.log('        ', user.name, 'さんの予定実施結果:', history);
+                        const efficacy_rate = history['successFinish'] / history['taskCount'];
+                        console.log('実施率：', new Intl.NumberFormat('ja',{style: 'percent'}).format(efficacy_rate));
+                        if(!isNaN(efficacy_rate) && efficacy_rate < 0.5){
+                            // 工夫を選び直す
+                            let selectedScheme = getGoodWorS(user,schemes,passedDays);
+                            console.log('        ', user.name, 'さんは工夫を「', selectedScheme.label, '」に変更しました．');
+                            await user.changeScheme({work:addedWork,scheme:selectedScheme});
+                        }
                         for (let d = 0; d < user.intervalDaysForSelfReflection; d++) {
                             // TODO: 予定を立てられるようにする
                             const chemistry = round(checkChemistry(user, addedWork, passedDays));

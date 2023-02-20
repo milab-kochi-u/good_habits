@@ -36,6 +36,30 @@ module.exports = (sequelize, DataTypes) => {
     return false;
   };
 
+  User.prototype.getCurrentSchemes = async function({work}){
+    const myUW = await this.getUsersWorks({
+      where: { WorkId: work.id}
+    }) ;
+    if(myUW.length != 1) return null;
+    const mySchemes = await myUW[0].getSchemes();
+    return mySchemes;
+  }
+  
+  // schemeの変更
+  User.prototype.changeScheme = async function({work, scheme}){
+    const myUW = await this.getUsersWorks({
+      where: {WorkId: work.id}
+    });
+    if(myUW.length != 1) return null;
+    // 前のschemeを削除
+    (await myUW[0].getUsersSchemes()).forEach(async US => {
+      console.log('deleting UsersScheme.id:', US.id)
+      await US.destroy();
+    });
+    console.log('adding scheme.label:', scheme.label, 'scheme.id', scheme.id);
+    await myUW[0].addScheme(scheme);
+  }
+
   User.prototype.createTask = async function({ work, start_time, end_time }) {
     const myWorks = await this.getUsersWorks({
       where: { WorkId: work.id }
