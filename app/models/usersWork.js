@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: true,
   });
   UsersWork.associate = (models) => {
-    UsersWork.belongsToMany(models.Scheme, { through: { model: models.UsersScheme } });
+    UsersWork.belongsToMany(models.Scheme, { through: { model: models.UsersScheme, unique:false}});
     UsersWork.belongsTo(models.Work);
     UsersWork.belongsTo(models.User);
 

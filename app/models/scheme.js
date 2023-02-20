@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
 
   Scheme.associate = (models) => {
     Scheme.belongsToMany(models.Category, { through: { model: models.SchemesCategoryPriority } });
-    Scheme.belongsToMany(models.UsersWork, { through: { model: models.UsersScheme } });
+    Scheme.belongsToMany(models.UsersWork, { through: { model: models.UsersScheme, unique:false}});
     Scheme.hasMany(models.UsersScheme);
   };
   
