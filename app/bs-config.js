@@ -29,7 +29,8 @@ module.exports = {
     "ignore": [],
     "single": false,
     "watchOptions": {
-        "ignoreInitial": true
+        "ignoreInitial": true,
+        ignored: ["**/*.sqlite3", "**/*.sqlite3-journal"]
     },
     "server": false,
     "proxy": "http://localhost:3000",

@@ -24,7 +24,8 @@ date_validate(){
 	# dateコマンドの引数の値が有効であれば0,そうでなければ1を返す
 	#https://qiita.com/ma2shita/items/d322463352fa01d776c8
 	res=0 # result value (0 is succeeded)
-	date -d 0hour > /dev/null 2>&1 # inspect
+	echo hello!aa
+	date --date 2020-01-01 > /dev/null 2>&1 # inspect
 	readonly _IS_DATECMD=$([ "$?" -eq 0 ] && echo "GNU" || echo "BSD") # judge (likes ternary operator)
 	echo "[NOTICE] You are using ${_IS_DATECMD} cmd." >&2
 	if [ "$_IS_DATECMD" = "GNU" ]; then
