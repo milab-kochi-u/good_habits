@@ -154,6 +154,9 @@ for (let i = 0; i < numberOfUsers; i++) {
 	const thresholdOfWorkChanging = round(getRandomInt(rangeOfThresholdOfWorkChanging) / 100.0);
 	// const thresholdOfSchemeChanging = round(getRandomInt(rangeOfThresholdOfSchemeChanging) / 100.0);
 	const thresholdOfSchemeChanging = round(thresholdOfWorkChanging * 4);
+	const featureOfStart = round(Math.random());
+	const featureOfComplete = round(Math.random());
+	// TODO: これを正規分布に合わせる
 	const user = {
 		'name': 'user' + num,
 		'waveLength': waveLength,
@@ -164,6 +167,8 @@ for (let i = 0; i < numberOfUsers; i++) {
 		'intervalDaysForSelfReflection': intervalDaysForSelfReflection,
 		'thresholdOfWorkChanging': thresholdOfWorkChanging,
 		'thresholdOfSchemeChanging': thresholdOfSchemeChanging,
+		'featureOfStart': featureOfStart,
+		'featureOfComplete': featureOfComplete,
 	};
 	users.push(user);
 }

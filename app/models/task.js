@@ -38,12 +38,12 @@ module.exports = (sequelize, DataTypes) => {
   // タスクの開始
   Task.prototype.open = async function(started_at){
     this.started_at = started_at;
-    this.result = 1;
     await this.save();
   }
   // タスクの終了
   Task.prototype.close = async function(finished_at){
     this.finished_at = finished_at;
+    this.result = 1;
     await this.save();
   }
   // TODO: 「今日はやらない」or「今日はできなかった」ボタンを押すことでresult=0
@@ -51,10 +51,10 @@ module.exports = (sequelize, DataTypes) => {
   /* 
     実際のアプリで想定されるボタンは
     ・「開始」
-      -> started_at, resutl 更新
+      -> started_at, 更新
 
     ・「終了」（開始を押していることが前提）
-      -> finished_at 更新
+      -> finished_at, result 更新
 
     ・「リスケする」
       -> 旧タスク : deletedAt, resutl 更新

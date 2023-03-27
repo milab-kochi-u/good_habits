@@ -15,6 +15,8 @@ module.exports = (sequelize, DataTypes) => {
     lastSelfReflectedAt: DataTypes.DATE,  // 最後に振り返りを行った日付
     thresholdOfWorkChanging: DataTypes.FLOAT,
     thresholdOfSchemeChanging: DataTypes.FLOAT,
+    featureOfStart: DataTypes.FLOAT, // とりかかる特性（とりかかれる確率）
+    featureOfComplete: DataTypes.FLOAT, // やりきる特性（やりきれる確率）
   }, {
     timestamps: false
   });

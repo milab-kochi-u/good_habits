@@ -231,12 +231,26 @@ async function resultsOfTask(user, work, date, dayCount) {
                         if (wheterDo <= 0.5){
                             console.log('           ', '本日はサボりました...');
                         }else{
-                            task.open(task.start_time);
-                            console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に開始しました．');
-
-                            process.env['FAKETIME'] = dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
-                            task.close(task.end_time);
-                            console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
+                            // やる気があっても特性に沿った行動をさせる
+                            // 本人のfeatureOfStart,featureOfComplete(value: 0~1)を確率として考え，その確率で抽選を行う
+                            // 抽選に当たるとポジティブな行動(とりかかる，やりきる)，外れるとネガティブな行動（とりかかれない，やりきれない）を実施
+                            const randOfStart = round(Math.random());
+                            const randOfComplete = round(Math.random());
+                            console.log('           ', user.name, 'さんのとりかかれる確率：', Math.floor(user.featureOfStart*100), '%  乱数出力：', Math.floor(randOfStart*100));
+                            if(randOfStart < user.featureOfStart){ // あたり（とりかかれる）
+                                task.open(task.start_time);
+                                console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に開始しました．');
+                                console.log('           ', user.name, 'さんのやりきる確率：', Math.floor(user.featureOfComplete*100), '%  乱数出力：', Math.floor(randOfComplete*100));
+                                if(randOfComplete < user.featureOfComplete){ // あたり（やりきる）
+                                    process.env['FAKETIME'] = dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
+                                    task.close(task.end_time);
+                                    console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
+                                }else{
+                                    console.log('           ', 'やりきりませんでした...');
+                                }
+                            }else{ // はずれ（とりかかれない）
+                                console.log('           ', '今日はとりかかれませんでした...');
+                            }
                         }
                     }
                 }
@@ -247,6 +261,20 @@ async function resultsOfTask(user, work, date, dayCount) {
             date = date.add(1, 'day');  // 1日進める
         }
 
+        // ----シミュレーション終了，分析結果----
+        console.log('--------------------------------------------');
+        console.log('シミュレーションが終了しました，分析結果を表示します．');
+        for(let user of users){
+            console.log('--------', 'UserName:' + user.name, '--------');
+            console.log('user.featureOfStart:', user.featureOfStart);
+            console.log('user.featureOfComplete:', user.featureOfComplete);
+            const myWs = await user.getWorks();
+            for(let work of myWs){
+                console.log('WorkLabel:', work.label);
+                console.log('result('+argv.days+'days)\n', await resultsOfTask(user, work, date, argv.days));
+            }
+        }
+        console.log('--------------------------------------------');
         delete process.env.FAKETIME;
         console.log('シミュレーションを完了しました: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
         simLog.finishedAt = simulationFinishDate;
