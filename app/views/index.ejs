@@ -2,38 +2,40 @@
 
 <div class="m-4 p-7">
   <ul class="w-[27.5rem] [&>li]:p-2 [&>li]:border-b-4">
-    <li>!前回のシミュレーション実行時刻: <b><%= func.ddate(logs.updatedAt) %></b></li>
+    <li>前回のシミュレーション実行時刻: <b><%= func.ddate(logs.updatedAt) %></b></li>
     <li>simulating date: <b><%= func.ddate(logs.startedAt) + " ～ " + func.ddate(logs.finishedAt) %></b></li>
   </ul>
 
   <div class="mt-10 text-xl font-bold">シミュレーション設定</div>
   <form class="my-6 w-full max-w-sm">
     <div class="flex mb-4 items-center border-b border-teal-500 py-2">
-      <input id="create_profile" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
-      <label for="create_profile" class="ml-2 text-sm font-medium text-gray-900">プロファイルを作成</label>
+      <input id="createProfile" type="checkbox" name="createProfile" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+      <label for="createProfile" class="ml-2 text-sm font-medium text-gray-900">プロファイルを作成</label>
     </div>
     <div class="flex items-center border-b border-teal-500 py-2">
-      <input checked id="simulate" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+      <input checked id="simulate" type="checkbox" name="execSimulation" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
       <label for="simulate" class="ml-2 text-sm font-medium text-gray-900">シミュレーションを実行</label>
     </div>
     <div id="settings" class="ml-4 p-2 mt-2">
       <div class="blcok">
         <label for="days" class="text-sm mr-2">日数</label>
-        <input type="text" id="days" class="outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="10" required>
+        <input type="text" id="days" name="days" class="outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" value="10" required>
       </div>
       <div class="blcok my-2">
-        <label for="days" class="text-sm mr-2">期間</label>
-        <input type="date" class="outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" value="2020-01-01" required>
+        <label for="period" class="text-sm mr-2">期間</label>
+        <input type="date" id="period" name="period" class="outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" value="2020-01-01" required>
       </div>
-      <div class="blcok mt-4 h-12">
-        <button type='submit' class="back_btn1">実行</button>
-      </div>
+    </div>
+    <div class="blcok mt-4 h-12">
+      <button type='button' id="exec" class="back_btn1">実行</button>
     </div>
   </form>
 </div>
 
 <script>
   const settings = document.getElementById('settings');
+  let elm = document.getElementById('simulate');
+  elm.addEventListener('change', valueChange);
   function valueChange(){
     console.log(elm.checked);
     if(elm.checked){
@@ -42,9 +44,15 @@
       settings.style.display = "none";
     }
   }
-  let elm = document.getElementById('simulate');
-  elm.addEventListener('change', valueChange);
-  valueChange();
+
+  
+  function getFormElms(){return {
+    createProfile: document.getElementById('createProfile').value,
+    simulate: document.getElementById('simulate').value,
+    days: document.getElementById('days').value,
+    period: document.getElementById('period').value
+  }}
+  // console.log(formElms);
 </script>
 
 <%- include('partials/footer'); %>

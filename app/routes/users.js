@@ -20,10 +20,11 @@ router.get('/:id', async function(req, res, next){
   let graph_data = [];
   const user = await models.User.findByPk(req.params['id']);
   const sim_log = await models.SimulationLog.findOne({order: [ ['updatedAt', 'DESC']]});
-  const diff = dayjs(sim_log.finishedAt).diff(sim_log.startedAt,'day');
+  const userStartDay = dayjs(sim_log.startedAt).add(user.startDays-1,'d');
+  const diff = dayjs(sim_log.finishedAt).diff(userStartDay,'day');
   console.log("diff:" + diff);
   for(let i = 0;i <= diff; i++){
-    graph_data[i] = {x: dayjs(sim_log.startedAt).add(i,'d').format('YYYY-MM-DD'), y:0}
+    graph_data[i] = {x: userStartDay.add(i,'d').format('YYYY-MM-DD'), y:0}
     console.log("graph_data[", i,"]={x:",graph_data[i].x,", y:", graph_data[i].y,"}");
   }
 

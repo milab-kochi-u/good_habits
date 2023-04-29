@@ -2,12 +2,16 @@ const models = require('./models/index.js');
 const dayjs = require('dayjs');
 const yargs = require('yargs');
 const user = require('./models/user.js');
-const numberOfSignificantDigits = 2;    // 有効桁数
 const { Op } = require("sequelize");
+const random = require('./random.js');
 
-// 有効数字に丸める
-function round(num, digits = numberOfSignificantDigits) {
-	return Number.parseFloat(num.toFixed(digits));
+// userのモチベーションを指定値だけ増減させる（負の数も可能）
+function changeMotivation(user, val){
+    // TODO: 別カラムに分ける
+    const base = user.initialMotivation;
+    let res = (base + val) <= 0 ? 0 : random.round(base + val);
+    user.initialMotivation = res;
+    console.log('       ', user.name, 'さんの基礎モチベーションが', base, 'から', res, 'に変更されます');
 }
 
 // a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
@@ -26,7 +30,7 @@ function getGoodWorS(user,all_WorS,passedDays){
     let maxChemistry = -1;
     let selectedWorS = null;
     for(let WorS of all_WorS){
-        const chemistry = round(checkChemistry(user,WorS,passedDays));
+        const chemistry = random.round(checkChemistry(user,WorS,passedDays));
         if(chemistry > maxChemistry){
             selectedWorS = WorS;
             maxChemistry = chemistry;
@@ -139,6 +143,7 @@ async function resultsOfTask(user, work, date, dayCount) {
             for (let user of users) {
                 if (user.startDays > day+1) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
+                changeMotivation(user,-0.01); //やる気が1減る
 
                 // ワークが未決定なら決定する
                 if (addedWorks.length < 1) {
@@ -187,7 +192,7 @@ async function resultsOfTask(user, work, date, dayCount) {
                         }
                         for (let d = 0; d < user.intervalDaysForSelfReflection; d++) {
                             // TODO: 予定を立てられるようにする
-                            const chemistry = round(checkChemistry(user, addedWork, passedDays));
+                            const chemistry = random.round(checkChemistry(user, addedWork, passedDays));
                             if (chemistry < 0.1) continue;  // (仮) 0.1未満なら予定を立てない
                             const task = await user.createTask({
                                 work: addedWork,
@@ -226,30 +231,29 @@ async function resultsOfTask(user, work, date, dayCount) {
                         process.env['FAKETIME'] = dayjs(task.start_time).format('YYYY-MM-DD HH:mm:ss');
 
                         // 当日にユーザがタスクを実施するかどうかを決める
-                        let wheterDo = checkChemistry(user,w,passedDays);
-                        console.log('           ',user.name, 'さんの本日のやる気：', wheterDo);
-                        if (wheterDo <= 0.5){
+                        // initialMotivation, ユーザ・ワーク相性, ユーザ・工夫相性の兼ね合いで決まる
+                        const selectedScheme = (await user.getCurrentSchemes({work: w}))[0];
+                        // TODO: initialMotivationを別テーブルで分けて動的にしたい
+                        let wheterDo = random.round(user.initialMotivation*0.5 +  checkChemistry(user,w,passedDays)*0.25 + checkChemistry(user, selectedScheme,passedDays)*0.25);
+                        // let wheterDo = checkChemistry(user, w, passedDays);
+                        console.log('           ',user.name, 'さんの本日の総合モチベーション：', wheterDo, '    開始に必要な総合モチベーション:', random.round(1-user.featureOfStart));
+
+                        // やる気に対して，必要とされるやる気の閾値は”とりかかりの特性値”で決める
+                        if (wheterDo < random.round(1 - user.featureOfStart)){ // ワークの難易度によって閾値が増減する
+                        // if (wheterDo < random.round(1 - user.featureOfStart + ワークの難易度)){
                             console.log('           ', '本日はサボりました...');
                         }else{
-                            // やる気があっても特性に沿った行動をさせる
-                            // 本人のfeatureOfStart,featureOfComplete(value: 0~1)を確率として考え，その確率で抽選を行う
-                            // 抽選に当たるとポジティブな行動(とりかかる，やりきる)，外れるとネガティブな行動（とりかかれない，やりきれない）を実施
-                            const randOfStart = round(Math.random());
-                            const randOfComplete = round(Math.random());
-                            console.log('           ', user.name, 'さんのとりかかれる確率：', Math.floor(user.featureOfStart*100), '%  乱数出力：', Math.floor(randOfStart*100));
-                            if(randOfStart < user.featureOfStart){ // あたり（とりかかれる）
-                                task.open(task.start_time);
-                                console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に開始しました．');
-                                console.log('           ', user.name, 'さんのやりきる確率：', Math.floor(user.featureOfComplete*100), '%  乱数出力：', Math.floor(randOfComplete*100));
-                                if(randOfComplete < user.featureOfComplete){ // あたり（やりきる）
-                                    process.env['FAKETIME'] = dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
-                                    task.close(task.end_time);
-                                    console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
-                                }else{
-                                    console.log('           ', 'やりきりませんでした...');
-                                }
-                            }else{ // はずれ（とりかかれない）
-                                console.log('           ', '今日はとりかかれませんでした...');
+                            //　とりかかり成功
+                            task.open(task.start_time);
+                            console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に開始しました．');
+
+                            console.log('           終了に必要な総合モチベーション:', random.round(1-user.featureOfComplete));
+                            if(wheterDo > random.round(1 - user.featureOfComplete)){ // あたり（やりきる）
+                                process.env['FAKETIME'] = dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
+                                task.close(task.end_time);
+                                console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + process.env['FAKETIME'] + 'に終了しました．');
+                            }else{
+                                console.log('           ', 'やりきりませんでした...');
                             }
                         }
                     }

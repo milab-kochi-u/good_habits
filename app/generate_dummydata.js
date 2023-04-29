@@ -1,5 +1,5 @@
 // 初期値
-const seed = 1;	// 乱数のシード値
+const random = require('./random.js');
 const rangeOfInitialMotivation = [30, 80];	// 動機の高さ (0〜1) の初期値の範囲（×100）（30 → 実際は 0.3）
 const rangeOfThresholdOfWorkChanging = [0, 5];	// ワークを変更する閾値の範囲（×100）（30 → 実際は 0.3）
 // const rangeOfThresholdOfSchemeChanging = [0, 20];	// 工夫を変更する閾値の範囲（×100）（30 → 実際は 0.3）
@@ -17,43 +17,6 @@ const numberOfSignificantDigits = 2	// 有効桁数（乱数などの実数値�
 const numberOfDaysForExperiment = 365 * 0.5;	// 実験期間の日数
 const candidatesOfIntervalDaysForSelfReflection = [7, 14, 30];	// 振り返りを行う日数の候補
 
-// https://lowreal.net/2019/06/20/1
-Math.random.seed = (function me (s) {
-	// Xorshift128 (init seed with Xorshift32)
-	s ^= s << 13; s ^= 2 >>> 17; s ^= s << 5;
-	let x = 123456789^s;
-	s ^= s << 13; s ^= 2 >>> 17; s ^= s << 5;
-	let y = 362436069^s;
-	s ^= s << 13; s ^= 2 >>> 17; s ^= s << 5;
-	let z = 521288629^s;
-	s ^= s << 13; s ^= 2 >>> 17; s ^= s << 5;
-	let w = 88675123^s;
-	let t;
-	Math.random = function () {
-		t = x ^ (x << 11);
-		x = y; y = z; z = w;
-		// >>>0 means 'cast to uint32'
-		w = ((w ^ (w >>> 19)) ^ (t ^ (t >>> 8)))>>>0;
-		return w / 0x100000000;
-	};
-	Math.random.seed = me;
-	return me;
-})(0);
-
-// https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Global_Objects/Math/random
-function getRandomInt(range) {
-	min = range[0];
-	max = range[1];
-	min = Math.ceil(min);
-	max = Math.floor(max);
-	return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
-}
-
-// 有効数字に丸める
-function round(num, digits = numberOfSignificantDigits) {
-	return Number.parseFloat(num.toFixed(digits));
-}
-
 // a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
 // function checkChemistry(a, b, day) {
 // 	const aPhase = Math.sin(Math.PI * 2 * (day * 24 - a['initialPhase']) / a['waveLength']);
@@ -65,14 +28,14 @@ function round(num, digits = numberOfSignificantDigits) {
 function decidePriorityOfCategories() {
 	const priorities = new Array(numberOfCategories);
 	priorities.fill(0);	// 優先度の初期値 = 0
-	const firstCategoryNum = getRandomInt([0, numberOfCategories]);
+	const firstCategoryNum = random.getRandomInt([0, numberOfCategories]);
 	if (Math.random() < possibilityOfMultiCategory) {
 		let secondCategoryNum;
 		do {
-			secondCategoryNum = getRandomInt([0, numberOfCategories]);
+			secondCategoryNum = random.getRandomInt([0, numberOfCategories]);
 		} while (firstCategoryNum == secondCategoryNum);
-		const priorityOfFirstCategory = round(Math.random());
-		const priorityOfSecondCategory = round(1.0 - priorityOfFirstCategory);
+		const priorityOfFirstCategory = random.round(Math.random());
+		const priorityOfSecondCategory = random.round(1.0 - priorityOfFirstCategory);
 		priorities[firstCategoryNum] = priorityOfFirstCategory;
 		priorities[secondCategoryNum] = priorityOfSecondCategory;
 		// TODO: 3つ以上のカテゴリに属するものもあるかもしれない？
@@ -81,15 +44,12 @@ function decidePriorityOfCategories() {
 	return priorities;
 }
 
-// 乱数のシード値を指定（これにより，常に同じ乱数が生成される）
-Math.random.seed(seed);
-
 // Generate categories	// イメージ: 運動系, 勉強系, 日常生活系…など
 const categories = [];
 const cateDigits = parseInt(Math.log10(numberOfCategories)) + 1;
 for (let i = 0; i < numberOfCategories; i++) {
-	// const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt([0, 24]);
-	const waveLength = getRandomInt(rangeOfCycleDays);
+	// const waveLength = random.getRandomInt(rangeOfCycleDays) * 24 + random.getRandomInt([0, 24]);
+	const waveLength = random.getRandomInt(rangeOfCycleDays);
 	const initialPhase = 0;
 	const num = ('0'.repeat(cateDigits) + (i+1)).slice(-1 * cateDigits);
 	const category = {
@@ -106,8 +66,8 @@ const works = [];
 const workDigits = parseInt(Math.log10(numberOfWorks)) + 1;
 for (let i = 0; i < numberOfWorks; i++) {
 	const num = ('0'.repeat(workDigits) + (i+1)).slice(-1 * workDigits);
-	// const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['work']);
-	const waveLength = getRandomInt(rangeOfCycleDays);
+	// const waveLength = random.getRandomInt(rangeOfCycleDays) * 24 + random.getRandomInt(rangeOfCycleHours['work']);
+	const waveLength = random.getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const work = {
@@ -125,8 +85,8 @@ const schemes = [];
 const schemeDigits = parseInt(Math.log10(numberOfSchemes)) + 1;
 for (let i = 0; i < numberOfSchemes; i++) {
 	const num = ('0'.repeat(schemeDigits) + (i+1)).slice(-1 * schemeDigits);
-	// const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['scheme']);
-	const waveLength = getRandomInt(rangeOfCycleDays);
+	// const waveLength = random.getRandomInt(rangeOfCycleDays) * 24 + random.getRandomInt(rangeOfCycleHours['scheme']);
+	const waveLength = random.getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const scheme = {
@@ -144,18 +104,18 @@ const users = [];
 const userDigits = parseInt(Math.log10(numberOfUsers)) + 1;
 for (let i = 0; i < numberOfUsers; i++) {
 	const num = ('0'.repeat(userDigits) + (i+1)).slice(-1 * userDigits);
-	// const waveLength = getRandomInt(rangeOfCycleDays) * 24 + getRandomInt(rangeOfCycleHours['user']);
-	const waveLength = getRandomInt(rangeOfCycleDays);
+	// const waveLength = random.getRandomInt(rangeOfCycleDays) * 24 + random.getRandomInt(rangeOfCycleHours['user']);
+	const waveLength = random.getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
-	const startDays = getRandomInt([0, numberOfDaysForExperiment / 3]);
-	const initialMotivation = round(getRandomInt(rangeOfInitialMotivation) / 100.0);
-	const intervalDaysForSelfReflection = candidatesOfIntervalDaysForSelfReflection[getRandomInt([0, candidatesOfIntervalDaysForSelfReflection.length])];
-	const thresholdOfWorkChanging = round(getRandomInt(rangeOfThresholdOfWorkChanging) / 100.0);
-	// const thresholdOfSchemeChanging = round(getRandomInt(rangeOfThresholdOfSchemeChanging) / 100.0);
-	const thresholdOfSchemeChanging = round(thresholdOfWorkChanging * 4);
-	const featureOfStart = round(Math.random());
-	const featureOfComplete = round(Math.random());
+	const startDays = random.getRandomInt([0, numberOfDaysForExperiment / 3]);
+	const initialMotivation = random.round(random.getRandomInt(rangeOfInitialMotivation) / 100.0);
+	const intervalDaysForSelfReflection = candidatesOfIntervalDaysForSelfReflection[random.getRandomInt([0, candidatesOfIntervalDaysForSelfReflection.length])];
+	const thresholdOfWorkChanging = random.round(random.getRandomInt(rangeOfThresholdOfWorkChanging) / 100.0);
+	// const thresholdOfSchemeChanging = random.round(random.getRandomInt(rangeOfThresholdOfSchemeChanging) / 100.0);
+	const thresholdOfSchemeChanging = random.round(thresholdOfWorkChanging * 4);
+	const featureOfStart = random.round(Math.random());
+	const featureOfComplete = random.round(Math.random());
 	// TODO: これを正規分布に合わせる
 	const user = {
 		'name': 'user' + num,
