@@ -114,8 +114,15 @@ for (let i = 0; i < numberOfUsers; i++) {
 	const thresholdOfWorkChanging = random.round(random.getRandomInt(rangeOfThresholdOfWorkChanging) / 100.0);
 	// const thresholdOfSchemeChanging = random.round(random.getRandomInt(rangeOfThresholdOfSchemeChanging) / 100.0);
 	const thresholdOfSchemeChanging = random.round(thresholdOfWorkChanging * 4);
-	const featureOfStart = random.round(Math.random());
-	const featureOfComplete = random.round(Math.random());
+
+	let featureOfStart = random.round(random.rnorm(0.2,0.5));
+	if(featureOfStart < 0){ featureOfStart = 0; }
+	else if(featureOfStart > 1){ featureOfStart = 1}
+
+	let featureOfComplete = random.round(random.rnorm(0.2,0.5));
+	if(featureOfComplete < 0){ featureOfComplete = 0; }
+	else if(featureOfComplete > 1){ featureOfComplete = 1}
+
 	// TODO: これを正規分布に合わせる
 	const user = {
 		'name': 'user' + num,

@@ -131,7 +131,9 @@ async function resultsOfTask(user, work, date, dayCount) {
         // let cnt = 0;
 
         // reschedule test -----
-
+        for(let i = 0; i < 200; i++){
+            console.log(random.rnorm(0.20,0.5));
+        }
         for (let day = 0; day < argv.days; day++) {
             // 以降，FAKETIME で日付を騙す
             process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');
