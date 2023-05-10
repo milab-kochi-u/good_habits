@@ -6,11 +6,17 @@ const { Op } = require("sequelize");
 const random = require('./random.js');
 
 // userのモチベーションを指定値だけ増減させる（負の数も可能）
-function changeMotivation(user, val){
+async function changeMotivation(user, val){
     // TODO: 別カラムに分ける
-    const base = user.initialMotivation;
-    let res = (base + val) <= 0 ? 0 : random.round(base + val);
-    user.initialMotivation = res;
+    const userMotivation = await models.UsersMotivation.findOne({
+        where: { UserId: user.id},
+        order: [ [ 'createdAt', 'DESC']],
+    });
+    const base = userMotivation.motivation;
+    const res = (base + val) <= 0 ? 0 : random.round(base + val);
+    await user.createUsersMotivation({
+        motivation: res,
+    });
     console.log('       ', user.name, 'さんの基礎モチベーションが', base, 'から', res, 'に変更されます');
 }
 
@@ -131,9 +137,6 @@ async function resultsOfTask(user, work, date, dayCount) {
         // let cnt = 0;
 
         // reschedule test -----
-        for(let i = 0; i < 200; i++){
-            console.log(random.rnorm(0.20,0.5));
-        }
         for (let day = 0; day < argv.days; day++) {
             // 以降，FAKETIME で日付を騙す
             process.env['FAKETIME'] = date.format('YYYY-MM-DD HH:mm:ss');
