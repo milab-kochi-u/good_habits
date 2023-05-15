@@ -39,9 +39,6 @@ const fs = require('fs').promises;
                 featureOfStart: user.featureOfStart,
                 featureOfComplete: user.featureOfComplete,
             });
-            await newUser.createUsersMotivation({
-                motivation: user.initialMotivation,
-            });
             for (let n = 0; n < categories.length; n++) {
                 await models.UsersCategoryPriority.create({
                     UserId: newUser.id,

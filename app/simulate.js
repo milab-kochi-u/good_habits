@@ -102,6 +102,7 @@ async function resultsOfTask(user, work, date, dayCount) {
             await models.UsersScheme.truncate({ force: true, restartIdentity: true });
             await models.UsersWork.truncate({ force: true, restartIdentity: true });
             await models.SimulationLog.truncate({ force: true, restartIdentity: true });
+            await models.UsersMotivation.truncate({ force: true, restartIdentity: true });
                 // SQLite3 だと restartIdentity が効かない？
             await models.User.update({ lastSelfReflectedAt: null }, { where: {} });
         }
@@ -148,11 +149,16 @@ async function resultsOfTask(user, work, date, dayCount) {
             for (let user of users) {
                 if (user.startDays > day+1) continue;  // まだ利用を始めていない
                 let addedWorks = await user.getWorks();
-                changeMotivation(user,-0.01); //やる気が1減る
 
                 // ワークが未決定なら決定する
                 if (addedWorks.length < 1) {
                     console.log('    ', user.name, 'が利用開始します');
+                    const UMlength = (await user.getUsersMotivations()).length;
+                    if(UMlength == 0){
+                        await user.createUsersMotivation({
+                            motivation: user.initialMotivation,
+                        });
+                    }
                     let selectedWork = getGoodWorS(user,works,passedDays);
                     console.log('       ', user.name, 'は', selectedWork.label, 'を継続させたいワークに設定します');
                     await user.addWork(selectedWork);
@@ -164,8 +170,8 @@ async function resultsOfTask(user, work, date, dayCount) {
                     addedWorks = await user.getWorks();
                 }
 
-                // TODO: 予定の実施結果を記録できるようにする
-
+                changeMotivation(user,-0.01); //やる気が1減る
+                
                 // 次の振り返り日を決める
 
                 let nextSelfReflected = dayjs(date).subtract(1, 'day');
