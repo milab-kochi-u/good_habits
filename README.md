@@ -1,13 +1,26 @@
 # good_habits
 
-## usage
-### コンテナ立ち上げ & shell実行
-```docker-compose up -d```
+## 1. Webサーバの起動
+### with Docker
+```bash
+$ docker-compose up
+```
 
-```docker-compose exec app sh```
+### without Docker
+```bash
+$ cd ./app
+$ npm run start-dev
+```
 
-### expressアプリの実行
-```/app #npm run start-dev```
+## 2. シミュレートの実行
+### with Docker
+```bash
+$ docker-compose exec app bash
+$ ./start.sh (-h でヘルプ)
+```
 
-### test_database.js（モデル定義）
-```/app #node test_database.js```
+### without Docker
+```bash
+$ cd ./app
+$ ./start.sh
+```

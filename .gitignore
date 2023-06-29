@@ -135,3 +135,6 @@ dist
 
 # 開発中のdbは無視
 db-dev.sqlite3
+
+# シミュレーションで出力されるjsonファイルも無視する
+dummydata.json
