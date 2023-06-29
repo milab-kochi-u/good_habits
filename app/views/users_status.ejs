@@ -3,54 +3,323 @@
 <div class="m-4 p-4">
   <div class="h-12">
     <a class="inline-block back_btn1" href="<%= link.parent %>">戻る</a>
+    <div class="ml-10 inline-block">
+      <p class="text-red-500">※現在、取り組むワークは1つで固定</p>
+    </div>
   </div>
   <!-- 日毎のタスク設定グラフ -->
-  <div class="m-4 p-4 w-3/5 border-4 border-gray-300 rounded">
-    <canvas id="myChart"></canvas>
+  <div class="m-1 p-1 mt-3">
+    <button type="button" id="graph_daily" onClick="drawChart('daily'); selectClear()" class="inline-block back_btn1">グラフを日毎に変更</button>
+    <button type="button" id="graph_weekly" onClick="drawChart('weekly'); selectClear()" class="inline-block back_btn1">グラフを週毎に変更</button>
+    <button type="button" id="graph_monthly" onClick="drawChart('monthly'); selectClear()" class="inline-block back_btn1">グラフを月毎に変更</button>
+    <div class="mx-3 inline-block">
+      <label for="DataToAdd" class="block mb-2 text-sm font-medium text-gray-900">追加で描画するデータ</label>
+      <select id="DataToAdd" onChange="drawChart('none',this.value)" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="none" selected>無し</option>
+        <option value="data_Motivation">モチベーション</option>
+        <option value="data_UserWave">ユーザの波</option>
+      </select>
+    </div>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <div class="[&>div]:mx-3 [&>div]:block inline-block">
+      <div class="[&>div]:mx-4 [&>div]:inline-block mb-8">
+        <div class="">
+          <p>ユーザ名</p>
+          <p><%= data.user.name %></p>
+        </div>
+        <div>
+          <p>取り組んでいるワーク</p>
+          <p><%= data.work.label %></p>
+        </div>
+        <div>
+          <p>user waveLength</p>
+          <p><%= data.user.waveLength %></p>
+        </div>
+        <div>
+          <p>user initialPhase</p>
+          <p><%= data.user.initialPhase %></p>
+        </div>
+        <div>
+          <p>work waveLength</p>
+          <p><%= data.work.waveLength %></p>
+        </div>
+        <div>
+          <p>work initialPhase</p>
+          <p><%= data.work.initialPhase %></p>
+        </div>
+        <div>
+          <p>とりかかる特性値</p>
+          <p><%= data.user.featureOfStart %></p>
+        </div>
+        <div>
+          <p>やりきる特性値</p>
+          <p><%= data.user.featureOfComplete %></p>
+        </div>
+      </div>
+      <div class="[&>div]:mx-4 [&>div]:inline-block [&>div]:w-[280px]">
+        <div>
+          <p>ユーザの波</p>
+          <p>
+            \[
+              y = sin(\frac{2π}{24 - \textcolor{red}{\boldsymbol{(<%= data.user.waveLength %>)}}} \times (x - \textcolor{#4169e1}{\boldsymbol{(<%= data.user.initialPhase %>)}}))
+            \]
+          </p>
+        </div>
+      </div>
+    </div>
+    <div id="chartParent" class="m-4 p-4 border-4 border-gray-300 overflow-x-scroll rounded relative h-[550px]">
+      <canvas id="myChart" class="absolute l-0 t-0"></canvas>
+    </div>
+    <!-- 周期関数のグラフを表示 -->
   </div>
-  <!-- 周期関数のグラフを表示 -->
 </div>
 
 <!-- script -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.8/locale/ja.min.js"></script>
 
 <script>
-  const ctx = document.getElementById('myChart');
-  data = [];
+  Chart.register(ChartDataLabels);
+  dayjs.locale("ja");
+  let show_data = {
+    daily:
+      {
+        labels: [],
+        tasks: [],
+        started_tasks: [],
+        finished_tasks: [],
+        successful_tasks: [],
+        motivations: [],
+        usersWaves: [],
+      },
+    weekly:
+      {
+        labels: [],
+        tasks: [],
+        started_tasks: [],
+        finished_tasks: [],
+        successful_tasks: [],
+        motivations: [],
+        usersWaves: [],
+      },
+    monthly:
+      {
+        labels: [],
+        tasks: [],
+        started_tasks: [],
+        finished_tasks: [],
+        successful_tasks: [],
+        motivations: [],
+        usersWaves: [],
+      },
+  }
+
   <% for(var i = 0; i < data.graph_data.length; i++){ %>
-    data[<%= i %>] = {x: "<%= data.graph_data[i].x %>", y: "<%= data.graph_data[i].y %>"}
+    show_data.daily.labels[<%= i %>] = dayjs("<%= data.graph_data[i].x %>").format('YYYY.MM.DD');
+    show_data.daily.tasks[<%= i %>] = "<%= data.graph_data[i].task %>";
+    show_data.daily.started_tasks[<%= i %>] = "<%= data.graph_data[i].started_task %>";
+    show_data.daily.finished_tasks[<%= i %>] = "<%= data.graph_data[i].finished_task %>";
+    show_data.daily.successful_tasks[<%= i %>] = "<%= data.graph_data[i].successful_task %>";
+    // motivationは1日に複数ある場合があるが、平均を1日の代表値として扱う
+    show_data.daily.motivations[<%= i %>] = "<%= Math.round(data.graph_data[i].motivations.reduce((sum,i) => sum + i.motivation, 0) / data.graph_data[i].motivations.length * Math.pow(10,2)) / Math.pow(10,2) %>";
+    show_data.daily.usersWaves[<%= i %>] = "<%= data.graph_data[i].waves[0].value %>";
   <% } %>
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      datasets: [{
-        label: '達成したタスク',
-        data: data
-      }],
-    },
-    options: {
+
+  // 週ごとにまとめる(日曜～土曜分をひとまとめにする)
+  // 日:0, 土:6
+  for(var i = 0; i < show_data.daily.tasks.length; i++){
+    let day_i = dayjs(show_data.daily.labels[i]);
+    let day_num = day_i.day();
+    let base_day = day_i.subtract(day_num, "d");
+    let day_period = base_day.add(6,"d");
+    // xラベルは"{base_day}-{day_period}"とする
+    let weekly_task_index = show_data.weekly.labels.findIndex(elm => elm == base_day.format('YYYY.MM.DD') + "~" + day_period.format('YYYY.MM.DD'));
+    if(weekly_task_index == -1){
+      show_data.weekly.labels[show_data.weekly.tasks.length] = base_day.format('YYYY.MM.DD') + "~" + day_period.format('YYYY.MM.DD');
+      show_data.weekly.tasks[show_data.weekly.tasks.length] = Number(show_data.daily.tasks[i]);
+      show_data.weekly.started_tasks[show_data.weekly.started_tasks.length] = Number(show_data.daily.started_tasks[i]);
+      show_data.weekly.finished_tasks[show_data.weekly.finished_tasks.length] = Number(show_data.daily.finished_tasks[i]);
+      show_data.weekly.successful_tasks[show_data.weekly.successful_tasks.length] = Number(show_data.daily.successful_tasks[i]);
+      show_data.weekly.motivations[show_data.weekly.motivations.length] = [Number(show_data.daily.motivations[i])];
+    }else{
+      show_data.weekly.tasks[weekly_task_index] += Number(show_data.daily.tasks[i]);
+      show_data.weekly.started_tasks[weekly_task_index] += Number(show_data.daily.started_tasks[i]);
+      show_data.weekly.finished_tasks[weekly_task_index] += Number(show_data.daily.finished_tasks[i]);
+      show_data.weekly.successful_tasks[weekly_task_index] += Number(show_data.daily.successful_tasks[i]);
+      show_data.weekly.motivations[weekly_task_index].push(Number(show_data.daily.motivations[i]));
+    }
+  }
+  for(const [index,item] of show_data.weekly.motivations.entries()){
+    let sum = item.reduce((prev, elm) => prev + elm);
+    show_data.weekly.motivations[index] = Math.round(sum / item.length * Math.pow(10,2)) / Math.pow(10,2);
+  }
+  
+  function selectClear(){
+    let sl = document.getElementById("DataToAdd");
+    let options = sl.options;
+    options[0].selected = true;
+  }
+
+  let DayType = "daily";
+  function drawChart(dayType = "none", DataToAdd = "none"){
+    if(dayType == "none") dayType = DayType;
+    else DayType = dayType;
+    let display = {};
+    // 横スクロールできるように
+    // https://qiita.com/yutake27/items/fa7b1f6b3c7c65e9d69b
+    let xAxisLabelMinWidth = 60, width;
+    if(dayType == "daily"){
+      width = show_data.daily.tasks.length * xAxisLabelMinWidth + 200;
+      display = JSON.parse(JSON.stringify(show_data.daily));
+      for(i = 0; i < display.labels.length; i++){
+        let words = display.labels[i].split('.');
+        display.labels[i] = [words[0], words[1] + "." + words[2]];
+      }
+    }else if(dayType == "weekly"){
+      width = show_data.weekly.tasks.length * xAxisLabelMinWidth + 200;
+      display = JSON.parse(JSON.stringify(show_data.weekly));
+      for(i = 0; i < display.labels.length; i++){
+        let words = display.labels[i].split('~');
+        display.labels[i] =  [words[0], "~", words[1]];
+      }
+    }else if(dayType == "monthly"){
+      width = show_data.monthly.tasks.length * xAxisLabelMinWidth + 200;
+      display = JSON.parse(JSON.stringify(show_data.monthly));
+    }
+    if(typeof(window.mychart) !== "undefined"){
+      window.mychart.destroy();
+      let parent = document.getElementById('chartParent');
+      parent.innerHTML = '<canvas id="myChart" class="absolute l-0 t-0"></canvas>';
+    }
+    const ctx = document.getElementById('myChart');
+    ctx.style.width = width+"px";
+    ctx.style.height = "450px";
+    let data = {
+      datasets: [
+        {
+          type: 'bar',
+          label: '設定したタスク',
+          data: display.tasks,
+          yAxisID: 'task_bar',
+          datalabels:{
+            display: false
+          },
+        },
+        {
+          type: 'bar',
+          label: '開始できたタスク',
+          data: display.started_tasks,
+          yAxisID: 'task_bar',
+          datalabels:{
+            display: false
+          },
+        },
+        {
+          type: 'bar',
+          label: '終了できたタスク',
+          data: display.finished_tasks,
+          yAxisID: 'task_bar',
+          datalabels:{
+            display: false
+          },
+        },
+        {
+          type: 'bar',
+          label: '成功したタスク',
+          data: display.successful_tasks,
+          yAxisID: 'task_bar',
+          datalabels:{
+            display: false
+          },
+        },
+      ],
+      labels: display.labels
+    };
+
+    let options = {
+      // responsive: false,
+      responsive: false,
+      maintainAspectRatio: false,
       tooltips:{
         mode: 'nearest'
       },
       plugins: {
         title: {
           display: true,
-          text: '日毎のタスク達成数',
+          text: 'タスク達成数',
+          align: "start"
+        },
+        legend: {
+          align: "start",
         },
       },
       scales: {
-        y: {
+        'task_bar': {
           // 小数点を隠す
           ticks:{
             precision: 0,
           },
           beginAtZero: true,
-          suggestedMax: 5,
-        }
+          suggestedMax: 3,
+          position: 'left',
+        },
       }
     }
-  });
+
+    if(DataToAdd == "data_Motivation"){
+      data.datasets.push({
+        type: 'line',
+        label: 'test',
+        data: display.motivations,
+        yAxisID: 'motivation_line',
+        datalabels:{
+          align: 'top',
+          color: '#FF0000',
+        },
+      });
+      options.scales['motivation_line'] = {
+        position: 'right',
+        beginAtZero: true,
+        max: 1.0,
+      };
+    }else if(DataToAdd == "data_UserWave"){
+      data.datasets.push({
+        type: 'line',
+        label: 'test',
+        lineTension: 0.3,
+        data: display.usersWaves,
+        yAxisID: 'wave_line',
+        datalabels:{
+          align: 'top',
+          color: "#FF0000",
+        }
+      });
+      options.scales['wave_line'] = {
+        position: 'right',
+        min: -1.1,
+        max: 1.1,
+      }
+    }
+    draw(data, options);
+    function draw(data, options){
+      window.mychart = new Chart(ctx, {
+        data: data,
+        options: options,
+        plugins: [{
+          beforeInit(chart){
+            const originFit = chart.legend.fit;
+            chart.legend.fit = function fit(){
+              originFit.bind(chart.legend)();
+              this.height += 18;
+            }
+          }
+        }],
+      });
+    }
+  }
+  drawChart('daily');
 </script>
 
 <%- include('partials/footer'); %>

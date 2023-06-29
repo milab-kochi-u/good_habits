@@ -1,5 +1,5 @@
 // 初期値
-const random = require('./random.js');
+const mathlib = require('./mathlib.js');
 const rangeOfInitialMotivation = [30, 80];	// 動機の高さ (0〜1) の初期値の範囲（×100）（30 → 実際は 0.3）
 const rangeOfThresholdOfWorkChanging = [0, 5];	// ワークを変更する閾値の範囲（×100）（30 → 実際は 0.3）
 // const rangeOfThresholdOfSchemeChanging = [0, 20];	// 工夫を変更する閾値の範囲（×100）（30 → 実際は 0.3）
@@ -28,14 +28,14 @@ const candidatesOfIntervalDaysForSelfReflection = [7, 14, 30];	// 振り返り�
 function decidePriorityOfCategories() {
 	const priorities = new Array(numberOfCategories);
 	priorities.fill(0);	// 優先度の初期値 = 0
-	const firstCategoryNum = random.getRandomInt([0, numberOfCategories]);
+	const firstCategoryNum = mathlib.getRandomInt([0, numberOfCategories]);
 	if (Math.random() < possibilityOfMultiCategory) {
 		let secondCategoryNum;
 		do {
-			secondCategoryNum = random.getRandomInt([0, numberOfCategories]);
+			secondCategoryNum = mathlib.getRandomInt([0, numberOfCategories]);
 		} while (firstCategoryNum == secondCategoryNum);
-		const priorityOfFirstCategory = random.round(Math.random());
-		const priorityOfSecondCategory = random.round(1.0 - priorityOfFirstCategory);
+		const priorityOfFirstCategory = mathlib.round(Math.random());
+		const priorityOfSecondCategory = mathlib.round(1.0 - priorityOfFirstCategory);
 		priorities[firstCategoryNum] = priorityOfFirstCategory;
 		priorities[secondCategoryNum] = priorityOfSecondCategory;
 		// TODO: 3つ以上のカテゴリに属するものもあるかもしれない？
@@ -48,8 +48,8 @@ function decidePriorityOfCategories() {
 const categories = [];
 const cateDigits = parseInt(Math.log10(numberOfCategories)) + 1;
 for (let i = 0; i < numberOfCategories; i++) {
-	// const waveLength = random.getRandomInt(rangeOfCycleDays) * 24 + random.getRandomInt([0, 24]);
-	const waveLength = random.getRandomInt(rangeOfCycleDays);
+	// const waveLength = mathlib.getRandomInt(rangeOfCycleDays) * 24 + mathlib.getRandomInt([0, 24]);
+	const waveLength = mathlib.getRandomInt(rangeOfCycleDays);
 	const initialPhase = 0;
 	const num = ('0'.repeat(cateDigits) + (i+1)).slice(-1 * cateDigits);
 	const category = {
@@ -66,8 +66,8 @@ const works = [];
 const workDigits = parseInt(Math.log10(numberOfWorks)) + 1;
 for (let i = 0; i < numberOfWorks; i++) {
 	const num = ('0'.repeat(workDigits) + (i+1)).slice(-1 * workDigits);
-	// const waveLength = random.getRandomInt(rangeOfCycleDays) * 24 + random.getRandomInt(rangeOfCycleHours['work']);
-	const waveLength = random.getRandomInt(rangeOfCycleDays);
+	// const waveLength = mathlib.getRandomInt(rangeOfCycleDays) * 24 + mathlib.getRandomInt(rangeOfCycleHours['work']);
+	const waveLength = mathlib.getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const work = {
@@ -85,8 +85,8 @@ const schemes = [];
 const schemeDigits = parseInt(Math.log10(numberOfSchemes)) + 1;
 for (let i = 0; i < numberOfSchemes; i++) {
 	const num = ('0'.repeat(schemeDigits) + (i+1)).slice(-1 * schemeDigits);
-	// const waveLength = random.getRandomInt(rangeOfCycleDays) * 24 + random.getRandomInt(rangeOfCycleHours['scheme']);
-	const waveLength = random.getRandomInt(rangeOfCycleDays);
+	// const waveLength = mathlib.getRandomInt(rangeOfCycleDays) * 24 + mathlib.getRandomInt(rangeOfCycleHours['scheme']);
+	const waveLength = mathlib.getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const scheme = {
@@ -104,22 +104,22 @@ const users = [];
 const userDigits = parseInt(Math.log10(numberOfUsers)) + 1;
 for (let i = 0; i < numberOfUsers; i++) {
 	const num = ('0'.repeat(userDigits) + (i+1)).slice(-1 * userDigits);
-	// const waveLength = random.getRandomInt(rangeOfCycleDays) * 24 + random.getRandomInt(rangeOfCycleHours['user']);
-	const waveLength = random.getRandomInt(rangeOfCycleDays);
+	// const waveLength = mathlib.getRandomInt(rangeOfCycleDays) * 24 + mathlib.getRandomInt(rangeOfCycleHours['user']);
+	const waveLength = mathlib.getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
-	const startDays = random.getRandomInt([0, numberOfDaysForExperiment / 3]);
-	const initialMotivation = random.round(random.getRandomInt(rangeOfInitialMotivation) / 100.0);
-	const intervalDaysForSelfReflection = candidatesOfIntervalDaysForSelfReflection[random.getRandomInt([0, candidatesOfIntervalDaysForSelfReflection.length])];
-	const thresholdOfWorkChanging = random.round(random.getRandomInt(rangeOfThresholdOfWorkChanging) / 100.0);
-	// const thresholdOfSchemeChanging = random.round(random.getRandomInt(rangeOfThresholdOfSchemeChanging) / 100.0);
-	const thresholdOfSchemeChanging = random.round(thresholdOfWorkChanging * 4);
+	const startDays = mathlib.getRandomInt([0, numberOfDaysForExperiment / 3]);
+	const initialMotivation = mathlib.round(mathlib.getRandomInt(rangeOfInitialMotivation) / 100.0);
+	const intervalDaysForSelfReflection = candidatesOfIntervalDaysForSelfReflection[mathlib.getRandomInt([0, candidatesOfIntervalDaysForSelfReflection.length])];
+	const thresholdOfWorkChanging = mathlib.round(mathlib.getRandomInt(rangeOfThresholdOfWorkChanging) / 100.0);
+	// const thresholdOfSchemeChanging = mathlib.round(mathlib.getRandomInt(rangeOfThresholdOfSchemeChanging) / 100.0);
+	const thresholdOfSchemeChanging = mathlib.round(thresholdOfWorkChanging * 4);
 
-	let featureOfStart = random.round(random.rnorm(0.2,0.5));
+	let featureOfStart = mathlib.round(mathlib.rnorm(0.2,0.5));
 	if(featureOfStart < 0){ featureOfStart = 0; }
 	else if(featureOfStart > 1){ featureOfStart = 1}
 
-	let featureOfComplete = random.round(random.rnorm(0.2,0.5));
+	let featureOfComplete = mathlib.round(mathlib.rnorm(0.2,0.5));
 	if(featureOfComplete < 0){ featureOfComplete = 0; }
 	else if(featureOfComplete > 1){ featureOfComplete = 1}
 

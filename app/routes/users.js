@@ -22,23 +22,41 @@ router.get('/:id', async function(req, res, next){
   const sim_log = await models.SimulationLog.findOne({order: [ ['updatedAt', 'DESC']]});
   const userStartDay = dayjs(sim_log.startedAt).add(user.startDays-1,'d');
   const diff = dayjs(sim_log.finishedAt).diff(userStartDay,'day');
-  console.log("diff:" + diff);
+  const usersMotivations = JSON.parse(JSON.stringify(await user.getUsersMotivations()));
+  const usersWaves = JSON.parse(JSON.stringify(await user.getUsersWaves()));
   for(let i = 0;i <= diff; i++){
-    graph_data[i] = {x: userStartDay.add(i,'d').format('YYYY-MM-DD'), y:0}
-    console.log("graph_data[", i,"]={x:",graph_data[i].x,", y:", graph_data[i].y,"}");
+    const motivations_day_i = usersMotivations.filter(elm => {
+      return dayjs(elm.createdAt).format('YYYY/MM/DD') == userStartDay.add(i,'d').format('YYYY/MM/DD');
+    });
+    const waves_day_i = usersWaves.filter(elm => {
+      return dayjs(elm.date).format('YYYY/MM/DD') == userStartDay.add(i,'d').format('YYYY/MM/DD');
+    });
+    graph_data[i] = {
+      x: userStartDay.add(i,'d').format('YYYY-MM-DD'),
+      task:0,
+      started_task:0,
+      finished_task:0,
+      successful_task:0,
+      motivations: motivations_day_i,
+      waves: waves_day_i,
+    }
+    // console.log("graph_data[", i,"]={x:",graph_data[i].x,", y:", graph_data[i].y,"}");
   }
 
   // タスクの内，実施結果が成功したものを抽出
   const My_user_works = await user.getUsersWorks();
-  for(var w of My_user_works){
-    const tasks = await w.getTasks({
-      where: { result: 1 },
-      order: [[ 'start_time', 'ASC']],
-    });
-    for(var t of tasks){
-      let res = graph_data.findIndex(elm => elm.x == dayjs(t.finished_at).format('YYYY-MM-DD'));
-      if(res != -1) {graph_data[res].y = graph_data[res].y + 1;}
-      console.log("task id:", t.id, "  task finished:", t.finished_at, "  task result:", t.result, " index:", res);
+  const My_work = await My_user_works[0].getWork();
+  // TODO: 複数のワークに対応する
+  const tasks = await My_user_works[0].getTasks({
+    order: [[ 'start_time', 'ASC']],
+  });
+  for(var t of tasks){
+    let res = graph_data.findIndex(elm => elm.x == dayjs(t.end_time).format('YYYY-MM-DD'));
+    if(res != -1) {
+      graph_data[res].task = graph_data[res].task + 1;
+      if(t.started_at != null) graph_data[res].started_task = graph_data[res].started_task + 1;
+      if(t.finished_at != null) graph_data[res].finished_task = graph_data[res].finished_task + 1;
+      if(t.result == true) graph_data[res].successful_task = graph_data[res].successful_task + 1;
     }
   }
   res.render('users_status', { 
@@ -49,6 +67,7 @@ router.get('/:id', async function(req, res, next){
     },
     data: {
       user: user,
+      work: My_work,
       logs: sim_log,
       graph_data: graph_data,
     },

@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     User.belongsToMany(models.Work, { through: { model: models.UsersWork } });
     User.hasMany(models.UsersWork);
     User.hasMany(models.UsersMotivation);
+    User.hasMany(models.UsersWave);
   };
 
   User.prototype.addScheme = async function({ work, scheme }) {

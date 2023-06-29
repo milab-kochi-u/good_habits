@@ -3,7 +3,6 @@ module.exports = (sequelize, DataTypes) => {
   // ユーザのモチベーション推移を記録するテーブル
   const UsersMotivation = sequelize.define('UsersMotivation', {
     motivation: DataTypes.FLOAT,
-  }, {
   });
 
   UsersMotivation.associate = (models) => {
