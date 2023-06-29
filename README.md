@@ -1,9 +1,26 @@
 # good_habits
 
-## usage(with Docker)
-```$ docker-compose up```
+## 1. Webサーバの起動
+### with Docker
+```bash
+$ docker-compose up
+```
 
-## usage(without Docker)
-```$ cd ./app```
+### without Docker
+```bash
+$ cd ./app
+$ npm run start-dev
+```
 
-```$ npm run start-dev```
+## 2. シミュレートの実行
+### with Docker
+```bash
+$ docker-compose exec app bash
+$ ./start.sh (-h でヘルプ)
+```
+
+### without Docker
+```bash
+$ cd ./app
+$ ./start.sh
+```
