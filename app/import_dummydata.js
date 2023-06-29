@@ -36,6 +36,8 @@ const fs = require('fs').promises;
                 intervalDaysForSelfReflection: user.intervalDaysForSelfReflection,
                 thresholdOfWorkChanging: user.thresholdOfWorkChanging,
                 thresholdOfSchemeChanging: user.thresholdOfSchemeChanging,
+                featureOfStart: user.featureOfStart,
+                featureOfComplete: user.featureOfComplete,
             });
             for (let n = 0; n < categories.length; n++) {
                 await models.UsersCategoryPriority.create({
