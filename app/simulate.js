@@ -104,6 +104,7 @@ async function resultsOfTask(user, work, date, dayCount) {
             await models.SimulationLog.truncate({ force: true, restartIdentity: true });
             await models.UsersMotivation.truncate({ force: true, restartIdentity: true });
             await models.UsersWave.truncate({ force: true, restartIdentity: true });
+            await models.WorksWave.truncate({ force: true, restartIdentity: true });
                 // SQLite3 だと restartIdentity が効かない？
             await models.User.update({ lastSelfReflectedAt: null }, { where: {} });
         }
@@ -146,6 +147,15 @@ async function resultsOfTask(user, work, date, dayCount) {
             console.log(day+1, '日目:', date.format('YYYY/MM/DD HH:mm'));
             const passedDays = date.diff(simulationStartDate, 'day');
             console.log('  シミュレーション開始から', passedDays, '日経過');
+
+            // workの波をテーブルに登録
+            for(let work of works){
+                const worksWaveValue = mathlib.round(Math.sin(2 * Math.PI / (24 - work['waveLength']) * (day - work['initialPhase'])));
+                await work.createWorksWave({
+                    value: worksWaveValue,
+                    date: date.format('YYYY.MM.DD'),
+                });
+            }
 
             for (let user of users) {
                 if (user.startDays > day+1) continue;  // まだ利用を始めていない

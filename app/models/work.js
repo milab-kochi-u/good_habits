@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
     Work.belongsToMany(models.Category, { through: { model: models.WorksCategoryPriority } });
     Work.belongsToMany(models.User, { through: { model: models.UsersWork } });
     Work.hasMany(models.UsersWork);
+    Work.hasMany(models.WorksWave);
   };
 
   return Work;

@@ -13,11 +13,19 @@
     <button type="button" id="graph_weekly" onClick="drawChart('weekly'); selectClear()" class="inline-block back_btn1">グラフを週毎に変更</button>
     <button type="button" id="graph_monthly" onClick="drawChart('monthly'); selectClear()" class="inline-block back_btn1">グラフを月毎に変更</button>
     <div class="mx-3 inline-block">
-      <label for="DataToAdd" class="block mb-2 text-sm font-medium text-gray-900">追加で描画するデータ</label>
-      <select id="DataToAdd" onChange="drawChart('none',this.value)" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
-        <option value="none" selected>無し</option>
+      <label for="DataToAdd" class="block mb-2 text-sm font-medium text-gray-900">第1系列に描画するデータ</label>
+      <select id="DataToAdd" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="data_task_bar">タスク達成数</option>
         <option value="data_Motivation">モチベーション</option>
         <option value="data_UserWave">ユーザの波</option>
+        <option value="data_WorkWave">ワークの波</option>
+      </select>
+    </div>
+    <!-- <div class="mx-3 inline-block"> -->
+    <div class="mx-3 mb-8 inline-block">
+      <label for="DataToAdd2" class="block mb-2 text-sm font-medium text-gray-900">第2系列に描画するデータ</label>
+      <select id="DataToAdd2" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="none" selected>無し</option>
       </select>
     </div>
     <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -93,6 +101,7 @@
         successful_tasks: [],
         motivations: [],
         usersWaves: [],
+        worksWaves: [],
       },
     weekly:
       {
@@ -103,6 +112,7 @@
         successful_tasks: [],
         motivations: [],
         usersWaves: [],
+        worksWaves: [],
       },
     monthly:
       {
@@ -113,6 +123,7 @@
         successful_tasks: [],
         motivations: [],
         usersWaves: [],
+        worksWaves: [],
       },
   }
 
@@ -125,6 +136,7 @@
     // motivationは1日に複数ある場合があるが、平均を1日の代表値として扱う
     show_data.daily.motivations[<%= i %>] = "<%= Math.round(data.graph_data[i].motivations.reduce((sum,i) => sum + i.motivation, 0) / data.graph_data[i].motivations.length * Math.pow(10,2)) / Math.pow(10,2) %>";
     show_data.daily.usersWaves[<%= i %>] = "<%= data.graph_data[i].waves[0].value %>";
+    show_data.daily.worksWaves[<%= i %>] = "<%= data.graph_data[i].worksWaves[0].value %>";
   <% } %>
 
   // 週ごとにまとめる(日曜～土曜分をひとまとめにする)
@@ -163,10 +175,15 @@
   }
 
   let DayType = "daily";
-  function drawChart(dayType = "none", DataToAdd = "none"){
+  function drawChart(dayType = "none"){
+    let eDataToAdd = document.getElementById('DataToAdd');
+    let eDataToAdd2 = document.getElementById('DataToAdd2');
+    const DataToAdd = eDataToAdd.options[eDataToAdd.selectedIndex].value;
+    const DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value;
     if(dayType == "none") dayType = DayType;
     else DayType = dayType;
     let display = {};
+
     // 横スクロールできるように
     // https://qiita.com/yutake27/items/fa7b1f6b3c7c65e9d69b
     let xAxisLabelMinWidth = 60, width;
@@ -267,39 +284,63 @@
         },
       }
     }
-
-    if(DataToAdd == "data_Motivation"){
-      data.datasets.push({
-        type: 'line',
-        label: 'test',
-        data: display.motivations,
-        yAxisID: 'motivation_line',
-        datalabels:{
-          align: 'top',
-          color: '#FF0000',
-        },
-      });
-      options.scales['motivation_line'] = {
-        position: 'right',
-        beginAtZero: true,
-        max: 1.0,
-      };
-    }else if(DataToAdd == "data_UserWave"){
-      data.datasets.push({
-        type: 'line',
-        label: 'test',
-        lineTension: 0.3,
-        data: display.usersWaves,
-        yAxisID: 'wave_line',
-        datalabels:{
-          align: 'top',
-          color: "#FF0000",
+    eDataToAdd2.innerHTML = '<option value="none" selected>無し</option>';
+    if(DataToAdd != "data_task_bar") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_task_bar">タスク達成数</option>');
+    if(DataToAdd != "data_Motivation") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_Motivation">モチベーション</option>');
+    if(DataToAdd != "data_UserWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_UserWave">ユーザの波</option>');
+    if(DataToAdd != "data_WorkWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_WorkWave">ワークの波</option>');
+    for(data_i of [DataToAdd, DataToAdd2]){
+      if(data_i == "none") continue;
+      if(data_i == "data_Motivation"){
+        data.datasets.push({
+          type: 'line',
+          label: 'test',
+          data: display.motivations,
+          yAxisID: 'motivation_line',
+          datalabels:{
+            align: 'top',
+            color: '#FF0000',
+          },
+        });
+        options.scales['motivation_line'] = {
+          position: 'right',
+          beginAtZero: true,
+          max: 1.0,
+        };
+      }else if(data_i == "data_UserWave"){
+        data.datasets.push({
+          type: 'line',
+          label: 'test',
+          lineTension: 0.3,
+          data: display.usersWaves,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+            color: "#FF0000",
+          }
+        });
+        options.scales['wave_line'] = {
+          position: 'right',
+          min: -1.1,
+          max: 1.1,
         }
-      });
-      options.scales['wave_line'] = {
-        position: 'right',
-        min: -1.1,
-        max: 1.1,
+      }else if(data_i == "data_WorkWave"){
+        data.datasets.push({
+          type:'line',
+          label: 'test',
+          lineTension: 0.3,
+          data: display.worksWaves,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+            color: "#FF0000",
+          }
+        });
+        options.scales['wave_line'] = {
+          position: 'right',
+          min: -1.1,
+          max: 1.1,
+        }
       }
     }
     draw(data, options);
