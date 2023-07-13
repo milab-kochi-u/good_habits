@@ -175,12 +175,12 @@
   }
 
   let DayType = "daily";
-  let prevDataToAdd = "data_task_bar";
+  let prevDataToAdd = "none";
   function drawChart(dayType = "none"){
     let eDataToAdd = document.getElementById('DataToAdd');
     let eDataToAdd2 = document.getElementById('DataToAdd2');
-    const DataToAdd = eDataToAdd.options[eDataToAdd.selectedIndex].value;
-    const DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value;
+    let DataToAdd = eDataToAdd.options[eDataToAdd.selectedIndex].value;
+    let DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value;
 
     if(DataToAdd != prevDataToAdd){
       eDataToAdd2.innerHTML = '<option value="none">無し</option>';
@@ -189,6 +189,7 @@
       if(DataToAdd != "data_UserWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_UserWave">ユーザの波</option>');
       if(DataToAdd != "data_WorkWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_WorkWave">ワークの波</option>');
       prevDataToAdd = DataToAdd;
+      DataToAdd2 = "none";
     }
     
     if(dayType == "none") dayType = DayType;
@@ -225,45 +226,8 @@
     ctx.style.width = width+"px";
     ctx.style.height = "450px";
     let data = {
-      datasets: [
-        {
-          type: 'bar',
-          label: '設定したタスク',
-          data: display.tasks,
-          yAxisID: 'task_bar',
-          datalabels:{
-            display: false
-          },
-        },
-        {
-          type: 'bar',
-          label: '開始できたタスク',
-          data: display.started_tasks,
-          yAxisID: 'task_bar',
-          datalabels:{
-            display: false
-          },
-        },
-        {
-          type: 'bar',
-          label: '終了できたタスク',
-          data: display.finished_tasks,
-          yAxisID: 'task_bar',
-          datalabels:{
-            display: false
-          },
-        },
-        {
-          type: 'bar',
-          label: '成功したタスク',
-          data: display.successful_tasks,
-          yAxisID: 'task_bar',
-          datalabels:{
-            display: false
-          },
-        },
-      ],
-      labels: display.labels
+      datasets: [],
+      labels: display.labels,
     };
 
     let options = {
@@ -276,7 +240,7 @@
       plugins: {
         title: {
           display: true,
-          text: 'タスク達成数',
+          text: 'タスク取組状況',
           align: "start"
         },
         legend: {
@@ -284,23 +248,14 @@
         },
       },
       scales: {
-        'task_bar': {
-          // 小数点を隠す
-          ticks:{
-            precision: 0,
-          },
-          beginAtZero: true,
-          suggestedMax: 3,
-          position: 'left',
-        },
-      }
+      },
     }
     for(data_i of [DataToAdd, DataToAdd2]){
       if(data_i == "none") continue;
       if(data_i == "data_Motivation"){
         data.datasets.push({
           type: 'line',
-          label: 'test',
+          label: 'ユーザのモチベーション',
           data: display.motivations,
           yAxisID: 'motivation_line',
           datalabels:{
@@ -316,7 +271,7 @@
       }else if(data_i == "data_UserWave"){
         data.datasets.push({
           type: 'line',
-          label: 'test',
+          label: 'ユーザの波',
           lineTension: 0.3,
           data: display.usersWaves,
           yAxisID: 'wave_line',
@@ -333,7 +288,7 @@
       }else if(data_i == "data_WorkWave"){
         data.datasets.push({
           type:'line',
-          label: 'test',
+          label: 'ワークの波',
           lineTension: 0.3,
           data: display.worksWaves,
           yAxisID: 'wave_line',
@@ -346,6 +301,54 @@
           position: 'right',
           min: -1.1,
           max: 1.1,
+        }
+      }else if(data_i == "data_task_bar"){
+        data.datasets.push(
+          {
+            type: 'bar',
+            label: '設定したタスク',
+            data: display.tasks,
+            yAxisID: 'task_bar',
+            datalabels:{
+              display: false
+            },
+          },
+          {
+            type: 'bar',
+            label: '開始できたタスク',
+            data: display.started_tasks,
+            yAxisID: 'task_bar',
+            datalabels:{
+              display: false
+            },
+          },
+          {
+            type: 'bar',
+            label: '終了できたタスク',
+            data: display.finished_tasks,
+            yAxisID: 'task_bar',
+            datalabels:{
+              display: false
+            },
+          },
+          {
+            type: 'bar',
+            label: '成功したタスク',
+            data: display.successful_tasks,
+            yAxisID: 'task_bar',
+            datalabels:{
+              display: false
+            },
+          },
+        );
+        options.scales.task_bar = {
+          // 小数点を隠す
+          ticks:{
+            precision: 0,
+          },
+          beginAtZero: true,
+          suggestedMax: 3,
+          position: 'left',
         }
       }
     }
