@@ -175,11 +175,22 @@
   }
 
   let DayType = "daily";
+  let prevDataToAdd = "data_task_bar";
   function drawChart(dayType = "none"){
     let eDataToAdd = document.getElementById('DataToAdd');
     let eDataToAdd2 = document.getElementById('DataToAdd2');
     const DataToAdd = eDataToAdd.options[eDataToAdd.selectedIndex].value;
     const DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value;
+
+    if(DataToAdd != prevDataToAdd){
+      eDataToAdd2.innerHTML = '<option value="none">無し</option>';
+      if(DataToAdd != "data_task_bar") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_task_bar">タスク達成数</option>');
+      if(DataToAdd != "data_Motivation") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_Motivation">モチベーション</option>');
+      if(DataToAdd != "data_UserWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_UserWave">ユーザの波</option>');
+      if(DataToAdd != "data_WorkWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_WorkWave">ワークの波</option>');
+      prevDataToAdd = DataToAdd;
+    }
+    
     if(dayType == "none") dayType = DayType;
     else DayType = dayType;
     let display = {};
@@ -284,11 +295,6 @@
         },
       }
     }
-    eDataToAdd2.innerHTML = '<option value="none" selected>無し</option>';
-    if(DataToAdd != "data_task_bar") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_task_bar">タスク達成数</option>');
-    if(DataToAdd != "data_Motivation") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_Motivation">モチベーション</option>');
-    if(DataToAdd != "data_UserWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_UserWave">ユーザの波</option>');
-    if(DataToAdd != "data_WorkWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_WorkWave">ワークの波</option>');
     for(data_i of [DataToAdd, DataToAdd2]){
       if(data_i == "none") continue;
       if(data_i == "data_Motivation"){
