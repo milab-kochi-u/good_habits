@@ -28,6 +28,18 @@
         <option value="none" selected>無し</option>
       </select>
     </div>
+    <div class="mx-3 mb-8 inline-block">
+      <label for="DataToAdd3" class="block mb-2 text-sm font-medium text-gray-900">第3系列に描画するデータ</label>
+      <select id="DataToAdd3" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="none" selected>無し</option>
+      </select>
+    </div>
+    <div class="mx-3 mb-8 inline-block">
+      <label for="DataToAdd4" class="block mb-2 text-sm font-medium text-gray-900">第4系列に描画するデータ</label>
+      <select id="DataToAdd4" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="none" selected>無し</option>
+      </select>
+    </div>
     <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <div class="[&>div]:mx-3 [&>div]:block inline-block">
       <div class="[&>div]:mx-4 [&>div]:inline-block mb-8">
@@ -176,21 +188,80 @@
 
   let DayType = "daily";
   let prevDataToAdd = "none";
+  let prevDataToAdd2 = "none";
+  let prevDataToAdd3 = "none";
   function drawChart(dayType = "none"){
     let eDataToAdd = document.getElementById('DataToAdd');
     let eDataToAdd2 = document.getElementById('DataToAdd2');
+    let eDataToAdd3 = document.getElementById('DataToAdd3');
+    let eDataToAdd4 = document.getElementById('DataToAdd4');
     let DataToAdd = eDataToAdd.options[eDataToAdd.selectedIndex].value;
     let DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value;
+    let DataToAdd3 = eDataToAdd3.options[eDataToAdd3.selectedIndex].value;
+    let DataToAdd4 = eDataToAdd4.options[eDataToAdd4.selectedIndex].value;
 
-    if(DataToAdd != prevDataToAdd){
-      eDataToAdd2.innerHTML = '<option value="none">無し</option>';
-      if(DataToAdd != "data_task_bar") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_task_bar">タスク達成数</option>');
-      if(DataToAdd != "data_Motivation") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_Motivation">モチベーション</option>');
-      if(DataToAdd != "data_UserWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_UserWave">ユーザの波</option>');
-      if(DataToAdd != "data_WorkWave") eDataToAdd2.insertAdjacentHTML('beforeend', '<option value="data_WorkWave">ワークの波</option>');
-      prevDataToAdd = DataToAdd;
-      DataToAdd2 = "none";
+    let strArray = ['<option value="data_task_bar">タスク達成数</option>','<option value="data_Motivation">モチベーション</option>','<option value="data_UserWave">ユーザの波</option>','<option value="data_WorkWave">ワークの波</option>'];
+    let strValueArray = ['data_task_bar','data_Motivation','data_UserWave','data_WorkWave'];
+    let clearStr = function(arr){
+      let nullstr = '<option value="none">無し</option>';
+      for(i of arr){
+        i.innerHTML = nullstr;
+        if(i.id == "DataToAdd2") DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value; 
+        if(i.id == "DataToAdd3") DataToAdd3 = eDataToAdd3.options[eDataToAdd3.selectedIndex].value; 
+        if(i.id == "DataToAdd4") DataToAdd4 = eDataToAdd4.options[eDataToAdd4.selectedIndex].value; 
+      }
     }
+    if(DataToAdd != prevDataToAdd){
+      clearStr([eDataToAdd2,eDataToAdd3,eDataToAdd4]);
+      prevDataToAdd = DataToAdd;
+      let eInd = 0;
+      let insertElm2 = strValueArray.filter(function(x,index){
+        if(x == DataToAdd) eInd = index;
+        return x != DataToAdd;
+      });
+      insertElm2 = strArray.filter(function(x,index){
+        return index != eInd;
+      });
+      for(i of insertElm2){
+        eDataToAdd2.insertAdjacentHTML('beforeend', i);
+      }
+    }
+    if(DataToAdd2 != prevDataToAdd2){
+      clearStr([eDataToAdd3,eDataToAdd4]);
+      prevDataToAdd2 = DataToAdd2;
+      let eInd = [];
+      let insertElm3 = strValueArray.filter(function(x,index){
+        if(x == DataToAdd || x == DataToAdd2) eInd.push(index);
+        return (x != DataToAdd && x != DataToAdd2);
+      });
+      insertElm3 = strArray.filter(function(x,index){
+        if(eInd.indexOf(index) !== -1) return false;
+        else return true;
+      });
+      if(DataToAdd2 != 'none'){
+        for(i of insertElm3){
+          eDataToAdd3.insertAdjacentHTML('beforeend', i);
+        }
+      }
+    }
+    if(DataToAdd3 != prevDataToAdd3){
+      clearStr([eDataToAdd4]);
+      prevDataToAdd3 = DataToAdd3;
+      let eInd = [];
+      let insertElm4 = strValueArray.filter(function(x,index){
+        if((x == DataToAdd || x == DataToAdd2) || x == DataToAdd3) eInd.push(index);
+        return ((x != DataToAdd && x != DataToAdd2) && x != DataToAdd3);
+      });
+      insertElm4 = strArray.filter(function(x,index){
+        if(eInd.indexOf(index) !== -1) return false;
+        else return true;
+      });
+      if(DataToAdd3 != 'none'){
+        for(i of insertElm4){
+          eDataToAdd4.insertAdjacentHTML('beforeend', i);
+        }
+      }
+    } 
     
     if(dayType == "none") dayType = DayType;
     else DayType = dayType;
@@ -250,24 +321,29 @@
       scales: {
       },
     }
-    for(data_i of [DataToAdd, DataToAdd2]){
+    for(data_i of [DataToAdd, DataToAdd2,DataToAdd3,DataToAdd4]){
       if(data_i == "none") continue;
       if(data_i == "data_Motivation"){
         data.datasets.push({
           type: 'line',
           label: 'ユーザのモチベーション',
           data: display.motivations,
-          yAxisID: 'motivation_line',
+          yAxisID: 'wave_line',
           datalabels:{
             align: 'top',
             color: '#FF0000',
           },
         });
-        options.scales['motivation_line'] = {
+        options.scales['wave_line'] = {
           position: 'right',
-          beginAtZero: true,
-          max: 1.0,
-        };
+          min: -1.1,
+          max: 1.1,
+        }
+        // options.scales['motivation_line'] = {
+        //   position: 'right',
+        //   min: -1.1,
+        //   max: 1.1,
+        // };
       }else if(data_i == "data_UserWave"){
         data.datasets.push({
           type: 'line',
