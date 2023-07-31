@@ -4,6 +4,7 @@ const yargs = require('yargs');
 const user = require('./models/user.js');
 const { Op } = require("sequelize");
 const mathlib = require('./mathlib.js');
+const schemesWave = require('./models/schemesWave.js');
 
 // userのモチベーションを指定値だけ増減させる（負の数も可能）
 async function changeMotivation(user, val){
@@ -105,6 +106,7 @@ async function resultsOfTask(user, work, date, dayCount) {
             await models.UsersMotivation.truncate({ force: true, restartIdentity: true });
             await models.UsersWave.truncate({ force: true, restartIdentity: true });
             await models.WorksWave.truncate({ force: true, restartIdentity: true });
+            await models.SchemesWave.truncate({ force: true, restartIdentity: true });
                 // SQLite3 だと restartIdentity が効かない？
             await models.User.update({ lastSelfReflectedAt: null }, { where: {} });
         }
@@ -153,6 +155,14 @@ async function resultsOfTask(user, work, date, dayCount) {
                 const worksWaveValue = mathlib.round(Math.sin(2 * Math.PI / (24 - work['waveLength']) * (day - work['initialPhase'])));
                 await work.createWorksWave({
                     value: worksWaveValue,
+                    date: date.format('YYYY.MM.DD'),
+                });
+            }
+            // schemeの波をテーブルに登録
+            for(let scheme of schemes){
+                const schemesWaveValue = mathlib.round(Math.sin(2 * Math.PI / (24 - scheme['waveLength']) * (day - scheme['initialPhase'])));
+                await scheme.createSchemesWave({
+                    value: schemesWaveValue,
                     date: date.format('YYYY.MM.DD'),
                 });
             }
