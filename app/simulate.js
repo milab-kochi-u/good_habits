@@ -124,6 +124,8 @@ async function resultsOfTask(user, work, date, dayCount) {
 
         // シミュレーションの開始日と終了日をログに記録する
         delete process.env.FAKETIME;
+        console.log('処理速度の計測を開始します．');
+        let execT_start = performance.now();
         console.log('シミュレーションを開始します: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
         if (!simulationStartDate) simulationStartDate = dayjs(date);    // 過去のシミュレーションも含めた開始日
         const simulationFinishDate = date.add(argv.days-1, 'day');
@@ -330,6 +332,9 @@ async function resultsOfTask(user, work, date, dayCount) {
         console.log('シミュレーションを完了しました: ', dayjs().format('YYYY/MM/DD HH:mm:ss'));
         simLog.finishedAt = simulationFinishDate;
         simLog.save();
+
+        let execT_end = performance.now();
+        console.log('処理時間：', mathlib.round((execT_end - execT_start) / 1000,2), '秒');
     }
     catch (e) {
         console.error(`Error: ${e.message}`);
