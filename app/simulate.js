@@ -5,6 +5,7 @@ const user = require('./models/user.js');
 const { Op } = require("sequelize");
 const mathlib = require('./mathlib.js');
 const schemesWave = require('./models/schemesWave.js');
+const worksWave = require('./models/worksWave.js');
 
 // userのモチベーションを指定値だけ増減させる（負の数も可能）
 async function changeMotivation(user, val){
@@ -153,21 +154,28 @@ async function resultsOfTask(user, work, date, dayCount) {
             console.log('  シミュレーション開始から', passedDays, '日経過');
 
             // workの波をテーブルに登録
+            let insertWorksWaves = [];
             for(let work of works){
                 const worksWaveValue = mathlib.round(Math.sin(2 * Math.PI / (24 - work['waveLength']) * (day - work['initialPhase'])));
-                await work.createWorksWave({
+                insertWorksWaves.push({
                     value: worksWaveValue,
                     date: date.format('YYYY.MM.DD'),
+                    WorkId: work.id,
                 });
             }
+            await models.WorksWave.bulkCreate(insertWorksWaves);
+
             // schemeの波をテーブルに登録
+            let insertSchemesWaves = [];
             for(let scheme of schemes){
                 const schemesWaveValue = mathlib.round(Math.sin(2 * Math.PI / (24 - scheme['waveLength']) * (day - scheme['initialPhase'])));
-                await scheme.createSchemesWave({
+                insertSchemesWaves.push({
                     value: schemesWaveValue,
                     date: date.format('YYYY.MM.DD'),
+                    SchemeId: scheme.id,
                 });
             }
+            await models.SchemesWave.bulkCreate(insertSchemesWaves);
 
             for (let user of users) {
                 if (user.startDays > day+1) continue;  // まだ利用を始めていない
