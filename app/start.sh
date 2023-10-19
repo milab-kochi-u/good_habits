@@ -5,8 +5,6 @@ if [ $$ -ne $(pgrep -fo "$0") ]; then
 	echo "[ERROR]既に起動されています"
 	exit 1
 fi
-sleep 5 
-exit 0
 
 help(){
 	cat <<- EOS
