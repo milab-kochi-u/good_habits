@@ -13,7 +13,9 @@ services:
         tty: true
         environment:
             - DEBUG=app:*
-        # この2行で日時を設定
+            # nodemonがファイル変更を検知するために必要
+            - CHOKIDAR_USEPOLLING=1
+            # この2行で日時を設定
             - LD_PRELOAD=/usr/local/lib/faketime/libfaketimeMT.so.1
 
         command: /bin/bash -c "npm run start-dev"

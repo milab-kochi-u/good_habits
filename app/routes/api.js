@@ -6,14 +6,14 @@ const dayjs = require('dayjs');
 const { exec } = require('child_process');
 
 /* API routes */
-router.post('/simulate', function(req, res, next){
+router.get('/simulate', async function(req, res, next){
   var resMsg = "";
-  exec('./start.sh -h', (err, stdout, stderr) => {
+  await exec('./start.sh -h', (err, stdout, stderr) => {
     if(err){
-      resMsg = `stderr: ${stderr}`;
+      res.status(409).send('[ERROR]既に起動されています．時間を空けて再度リクエストしてください．');
+    }else{
+      res.send(`stdout: ${stdout}`);
     }
-    resMsg = `stdout: ${stdout}`;
-    res.send(req.body);
   });
 });
 
