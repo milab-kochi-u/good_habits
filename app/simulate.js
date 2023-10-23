@@ -281,17 +281,15 @@ async function resultsOfTask(user, work, date, dayCount) {
                         // 当日にユーザがタスクを実施するかどうかを決める
                         // initialMotivation, ユーザ・ワーク相性, ユーザ・工夫相性の兼ね合いで決まる
                         const selectedScheme = (await user.getCurrentSchemes({work: w}))[0];
-                        // TODO: initialMotivationを別テーブルで分けて動的にしたい
                         const currentMotivation = (await models.UsersMotivation.findOne({
                             where: { UserId: user.id},
                             order: [[ 'createdAt', 'DESC']],
                         })).motivation;
                         const wheterDo = mathlib.round(currentMotivation*0.5 +  checkChemistry(user,w,passedDays)*0.25 + checkChemistry(user, selectedScheme,passedDays)*0.25);
-                        // let wheterDo = checkChemistry(user, w, passedDays);
                         console.log('           ',user.name, 'さんの本日の総合モチベーション：', wheterDo, '    開始に必要な総合モチベーション:', mathlib.round(1-user.featureOfStart));
 
                         // やる気に対して，必要とされるやる気の閾値は”とりかかりの特性値”で決める
-                        if (wheterDo < mathlib.round(1 - user.featureOfStart)){ // ワークの難易度によって閾値が増減する
+                        if (wheterDo <= mathlib.round(1 - user.featureOfStart)){ // ワークの難易度によって閾値が増減する
                         // if (wheterDo < mathlib.round(1 - user.featureOfStart + ワークの難易度)){
                             console.log('           ', '本日はサボりました...');
                         }else{

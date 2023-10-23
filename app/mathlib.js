@@ -39,7 +39,7 @@ function round(num, digits = numberOfSignificantDigits) {
 	return Number.parseFloat(num.toFixed(digits));
 }
 
-// 平均0　分散1の正規分布に従う乱数の生成
+// 平均0　標準偏差1の正規分布に従う乱数の生成
 // https://www.marketechlabo.com/normal-distribution-javascript/#%E6%AD%A3%E8%A6%8F%E4%B9%B1%E6%95%B0%E3%81%AE%E7%94%9F%E6%88%90%EF%BC%88rnorm%EF%BC%89
 function rnorm(sigma=1,mu=0){
     const z1 = Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());

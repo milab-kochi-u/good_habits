@@ -87,6 +87,15 @@ for (let i = 0; i < numberOfSchemes; i++) {
 	const num = ('0'.repeat(schemeDigits) + (i+1)).slice(-1 * schemeDigits);
 	// const waveLength = mathlib.getRandomInt(rangeOfCycleDays) * 24 + mathlib.getRandomInt(rangeOfCycleHours['scheme']);
 	const waveLength = mathlib.getRandomInt(rangeOfCycleDays);
+
+	let chemistry_featureOfStart = mathlib.round(mathlib.rnorm(0.2,0.5));
+	if(chemistry_featureOfStart < 0){ chemistry_featureOfStart = 0; }
+	else if(chemistry_featureOfStart > 1){ chemistry_featureOfStart = 1}
+
+	let chemistry_featureOfComplete = mathlib.round(mathlib.rnorm(0.2,0.5));
+	if(chemistry_featureOfComplete < 0){ chemistry_featureOfComplete = 0; }
+	else if(chemistry_featureOfComplete > 1){ chemistry_featureOfComplete = 1}
+
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const scheme = {
@@ -94,7 +103,10 @@ for (let i = 0; i < numberOfSchemes; i++) {
 		'waveLength': waveLength,
 		'initialPhase': initialPhase,
 		'priorityOfCategory': priorityOfCategory,
+		'chemistry_featureOfStart': chemistry_featureOfStart,
+		'chemistry_featureOfComplete': chemistry_featureOfComplete,
 	};
+
 	schemes.push(scheme);
 }
 // console.log(schemes);

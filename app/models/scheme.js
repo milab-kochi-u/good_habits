@@ -6,6 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     label: DataTypes.STRING,
     waveLength: DataTypes.INTEGER,
     initialPhase: DataTypes.INTEGER,
+    chemistry_featureOfStart: DataTypes.FLOAT,
+    chemistry_featureOfComplete: DataTypes.FLOAT,
   }, {
     timestamps: false
   });
