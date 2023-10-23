@@ -22,6 +22,17 @@ help(){
 	    シミュレーションを実行しません．
 	--data-gen:
 	    プロファイルを再作成します．
+	--backup [fileName]:
+	    このオプションは他のオプションより優先して実行されます．
+	    コマンド実行時点でのdummydata.jsonとdb-dev.sqlite3のコピーファイルを以下のように保存します．
+	    ./backups/fileName.json, ./backups/fileName.sqlite3
+	    拡張子は記述しないでください．
+	--replace [fileName]:
+	    引数に入力したファイル名に該当する
+	    fileName.json, fileName.sqlite3ファイルを
+	    ./dummydata.json, ./db-dev.sqlite3　に上書きします．
+	    このオプションを使用した場合ダミーデータの生成とシミュレーションは実施されません．
+	    拡張子は記述しないでください．
 	EOS
 	exit 0
 }
@@ -40,7 +51,7 @@ date_validate(){
 		# BSD date
 		(date -j -f '%Y/%m/%d' "$1") > /dev/null 2>&1 || (date -j -f '%Y-%m-%d' "$1") > /dev/null 2>&1 || res=1
 	fi
-    return $res
+	return $res
 }
 
 dateinit(){
@@ -63,6 +74,22 @@ exec_simulation(){
 	node simulate.js --init "${SETDATE}" -d "${SETDAYS}"
 }
 
+# バックアップファイルの生成
+backup_files(){
+	cp "./dummydata.json" "./backups/$1.json"
+	cp "./db-dev.sqlite3" "./backups/$1.sqlite3"
+}
+
+# バックアップファイルの適用
+replace_files(){
+	if [ -f "./backups/$1.json" ] && [ -f "./backups/$1.sqlite3" ]; then
+		cp "./backups/$1.json" "./dummydata.json"
+		cp "./backups/$1.sqlite3" "./db-dev.sqlite3"
+	else
+		echo "[ERROR] $1.json または $1.sqlite3 が存在しません．"
+		exit 1
+	fi
+}
 
 # シミュレーションの実行
 # -- 過去のシミュレーションの続きとして1000日間のシミュレーションを行う
@@ -83,6 +110,7 @@ FLAG_READDATA="NO"
 FLAG_SIMULATE="YES"
 while [[ $# -gt 0 ]]; do
 	case $1 in
+		# ---- param options ----
 		-i|--init)
 			if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
 			case $2 in
@@ -93,13 +121,38 @@ while [[ $# -gt 0 ]]; do
 					if ! date_validate $2 ; then echo "[ERROR] $1 parameter must be in date format." ; exit 1 ; fi
 					if [[ "$2" =~ ([a-zA-Z]+) ]]; then echo "[ERROR] $1 parameter must be in date format." ; exit 1 ; fi
 					SETDATE=$2 ; shift ; shift
-					;;
 			esac
 			;;
 		-D|--Day)
-			if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
-			if [[ ! "$2" =~ (^[1-9][0-9]*) ]] || [[ "${BASH_REMATCH[0]}" != "$2" ]]; then echo "[ERROR] $1 parameter must be in non zero interger." ; exit 1 ; fi
-			SETDAYS="$2" ; shift ; shift
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					if [[ ! "$2" =~ (^[1-9][0-9]*) ]] || [[ "${BASH_REMATCH[0]}" != "$2" ]]; then echo "[ERROR] $1 parameter must be in non zero interger." ; exit 1 ; fi
+					SETDAYS="$2" ; shift ; shift
+			esac
+			;;
+		--backup)
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					backup_files $2 ; shift ; shift
+			esac
+			;;
+		--replace)
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					replace_files $2 ; exit 0 
+			esac
 			;;
 
 		# ---- flag options ----
@@ -127,7 +180,6 @@ while [[ $# -gt 0 ]]; do
 						;;
 					*) 
 						echo "[ERROR] Unknown option -${OPTIONS:$i:1}" ; exit 1
-						;;
 				esac
 			done
 			unset OPTIONS ; shift
@@ -135,7 +187,6 @@ while [[ $# -gt 0 ]]; do
 
 		*)
 			echo "[ERROR] Unknown option $1" ; exit 1
-			;;
 	esac
 done
 

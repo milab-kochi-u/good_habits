@@ -9,7 +9,7 @@ const rangeOfCycleDays = [-10,10];	// 波長の周期の日数の範囲
 // TODO:乱数の出力は整数であり，日数単位として扱っているので，今後時間単位の乱数として扱いたい
 
 const numberOfCategories = 3;	// 1 にする場合は possibilityOfMultiCategory は 0 にすること
-const numberOfUsers = 5;
+const numberOfUsers = 100;
 const numberOfWorks = 1;
 const numberOfSchemes = 100;
 const possibilityOfMultiCategory = 0.3;	// 複数のカテゴリにまたがる可能性
