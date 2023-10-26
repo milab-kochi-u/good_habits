@@ -211,7 +211,6 @@ async function resultsOfTask(user, work, date, dayCount) {
                 await changeMotivation(user,-0.01); //やる気が0.01減る
                 
                 // 次の振り返り日を決める
-
                 let nextSelfReflected = dayjs(date).subtract(1, 'day');
                 if (user.lastSelfReflectedAt !== null && dayjs(user.lastSelfReflectedAt).isValid()) {
                     nextSelfReflected = dayjs(user.lastSelfReflectedAt).add(user.intervalDaysForSelfReflection, 'day');
@@ -228,7 +227,6 @@ async function resultsOfTask(user, work, date, dayCount) {
                     // TODO: 時間もまばらにする（全部19:00になってる）
                     for (addedWork of addedWorks) {
                         // TODO: 今までの履歴も振り返る
-                        // TODO: 実施率を見て工夫を変えるかどうか選択する
                         const history = await resultsOfTask(user,addedWork, date, 7);
                         console.log('        ', user.name, 'さんの予定実施結果:', history);
                         const efficacy_rate = history['successFinish'] / history['taskCount'];
@@ -285,11 +283,18 @@ async function resultsOfTask(user, work, date, dayCount) {
                             where: { UserId: user.id},
                             order: [[ 'createdAt', 'DESC']],
                         })).motivation;
-                        const wheterDo = mathlib.round(currentMotivation*0.5 +  checkChemistry(user,w,passedDays)*0.25 + checkChemistry(user, selectedScheme,passedDays)*0.25);
-                        console.log('           ',user.name, 'さんの本日の総合モチベーション：', wheterDo, '    開始に必要な総合モチベーション:', mathlib.round(1-user.featureOfStart));
+
+                        //総合モチベーション
+                        // const wheterDo = mathlib.round(currentMotivation*0.5 +  checkChemistry(user,w,passedDays)*0.25 + checkChemistry(user, selectedScheme,passedDays)*0.25);
+                        const wheterDo = mathlib.round(currentMotivation * 0.5 +  checkChemistry(user, w, passedDays) * 0.5 + checkChemistry(user, selectedScheme, passedDays) * 0.2);
+                        //開始に必要なモチベーション
+                        const motiv_nedd_to_getStart = mathlib.round((1 - user.featureOfStart) - (selectedScheme.chemistry_featureOfStart - 0.5) * 0.2);
+                        //終了に必要なモチベーション
+                        const motiv_need_to_getItDone = mathlib.round((1 - user.featureOfComplete) - (selectedScheme.chemistry_featureOfComplete - 0.5) * 0.2);
+                        console.log('           ',user.name, 'さんの本日の総合モチベーション：', wheterDo, '    開始に必要な総合モチベーション:', motiv_nedd_to_getStart);
 
                         // やる気に対して，必要とされるやる気の閾値は”とりかかりの特性値”で決める
-                        if (wheterDo <= mathlib.round(1 - user.featureOfStart)){ // ワークの難易度によって閾値が増減する
+                        if (wheterDo <= motiv_nedd_to_getStart){ // ワークの難易度によって閾値が増減する
                         // if (wheterDo < mathlib.round(1 - user.featureOfStart + ワークの難易度)){
                             console.log('           ', '本日はサボりました...');
                         }else{
@@ -298,8 +303,8 @@ async function resultsOfTask(user, work, date, dayCount) {
                             task.open(dayjs());
                             console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + dayjs().format('YYYY/MM/DD HH:mm:ss') + 'に開始しました．');
 
-                            console.log('           終了に必要な総合モチベーション:', mathlib.round(1-user.featureOfComplete));
-                            if(wheterDo > mathlib.round(1 - user.featureOfComplete)){ // やりきる
+                            console.log('           終了に必要な総合モチベーション:', motiv_need_to_getItDone);
+                            if(wheterDo > motiv_need_to_getItDone){ // やりきる
                                 process.env['FAKETIME'] = "@" + dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
                                 // task.close(task.end_time);
                                 task.close(dayjs());
