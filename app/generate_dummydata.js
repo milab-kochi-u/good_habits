@@ -88,13 +88,9 @@ for (let i = 0; i < numberOfSchemes; i++) {
 	// const waveLength = mathlib.getRandomInt(rangeOfCycleDays) * 24 + mathlib.getRandomInt(rangeOfCycleHours['scheme']);
 	const waveLength = mathlib.getRandomInt(rangeOfCycleDays);
 
-	let chemistry_featureOfStart = mathlib.round(mathlib.rnorm(0.2,0.5));
-	if(chemistry_featureOfStart < 0){ chemistry_featureOfStart = 0; }
-	else if(chemistry_featureOfStart > 1){ chemistry_featureOfStart = 1}
+	let chemistry_featureOfStart = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
 
-	let chemistry_featureOfComplete = mathlib.round(mathlib.rnorm(0.2,0.5));
-	if(chemistry_featureOfComplete < 0){ chemistry_featureOfComplete = 0; }
-	else if(chemistry_featureOfComplete > 1){ chemistry_featureOfComplete = 1}
+	let chemistry_featureOfComplete = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
 
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
@@ -121,19 +117,16 @@ for (let i = 0; i < numberOfUsers; i++) {
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const startDays = mathlib.getRandomInt([0, numberOfDaysForExperiment / 3]);
-	const initialMotivation = mathlib.round(mathlib.getRandomInt(rangeOfInitialMotivation) / 100.0);
+	// const initialMotivation = mathlib.round(mathlib.getRandomInt(rangeOfInitialMotivation) / 100.0);
+	const initialMotivation = mathlib.round(mathlib.rnorm(0.2,0.5));
 	const intervalDaysForSelfReflection = candidatesOfIntervalDaysForSelfReflection[mathlib.getRandomInt([0, candidatesOfIntervalDaysForSelfReflection.length])];
 	const thresholdOfWorkChanging = mathlib.round(mathlib.getRandomInt(rangeOfThresholdOfWorkChanging) / 100.0);
 	// const thresholdOfSchemeChanging = mathlib.round(mathlib.getRandomInt(rangeOfThresholdOfSchemeChanging) / 100.0);
 	const thresholdOfSchemeChanging = mathlib.round(thresholdOfWorkChanging * 4);
 
-	let featureOfStart = mathlib.round(mathlib.rnorm(0.2,0.5));
-	if(featureOfStart < 0){ featureOfStart = 0; }
-	else if(featureOfStart > 1){ featureOfStart = 1}
+	let featureOfStart = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
 
-	let featureOfComplete = mathlib.round(mathlib.rnorm(0.2,0.5));
-	if(featureOfComplete < 0){ featureOfComplete = 0; }
-	else if(featureOfComplete > 1){ featureOfComplete = 1}
+	let featureOfComplete = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
 
 	// TODO: これを正規分布に合わせる
 	const user = {

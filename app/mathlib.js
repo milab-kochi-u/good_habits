@@ -46,7 +46,17 @@ function rnorm(sigma=1,mu=0){
 		return z1 * sigma + mu;
 }	
 
+function adjust(num, min=0, max=1){
+	if(num < min){
+		return min;
+	}else if(max < num){
+		return max
+	}else{
+		return num
+	}
+}
+
 // 乱数のシード値を指定（これにより，常に同じ乱数が生成される）
 Math.random.seed(seed);
 
-module.exports = {getRandomInt, round, rnorm};
+module.exports = {getRandomInt, round, rnorm, adjust};
