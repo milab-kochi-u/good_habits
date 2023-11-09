@@ -138,6 +138,3 @@ db-dev.sqlite3
 
 # シミュレーションで出力されるjsonファイルも無視する
 dummydata.json
-
-# 自動生成されるcssも監視外
-app/public/stylesheets/style.css

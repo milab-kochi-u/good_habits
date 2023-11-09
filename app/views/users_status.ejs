@@ -13,31 +13,11 @@
     <button type="button" id="graph_weekly" onClick="drawChart('weekly'); selectClear()" class="inline-block back_btn1">グラフを週毎に変更</button>
     <button type="button" id="graph_monthly" onClick="drawChart('monthly'); selectClear()" class="inline-block back_btn1">グラフを月毎に変更</button>
     <div class="mx-3 inline-block">
-      <label for="DataToAdd" class="block mb-2 text-sm font-medium text-gray-900">第1系列に描画するデータ</label>
-      <select id="DataToAdd" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
-        <option value="data_task_bar">タスク達成数</option>
+      <label for="DataToAdd" class="block mb-2 text-sm font-medium text-gray-900">追加で描画するデータ</label>
+      <select id="DataToAdd" onChange="drawChart('none',this.value)" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="none" selected>無し</option>
         <option value="data_Motivation">モチベーション</option>
         <option value="data_UserWave">ユーザの波</option>
-        <option value="data_WorkWave">ワークの波</option>
-      </select>
-    </div>
-    <!-- <div class="mx-3 inline-block"> -->
-    <div class="mx-3 mb-8 inline-block">
-      <label for="DataToAdd2" class="block mb-2 text-sm font-medium text-gray-900">第2系列に描画するデータ</label>
-      <select id="DataToAdd2" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
-        <option value="none" selected>無し</option>
-      </select>
-    </div>
-    <div class="mx-3 mb-8 inline-block">
-      <label for="DataToAdd3" class="block mb-2 text-sm font-medium text-gray-900">第3系列に描画するデータ</label>
-      <select id="DataToAdd3" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
-        <option value="none" selected>無し</option>
-      </select>
-    </div>
-    <div class="mx-3 mb-8 inline-block">
-      <label for="DataToAdd4" class="block mb-2 text-sm font-medium text-gray-900">第4系列に描画するデータ</label>
-      <select id="DataToAdd4" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
-        <option value="none" selected>無し</option>
       </select>
     </div>
     <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -113,7 +93,6 @@
         successful_tasks: [],
         motivations: [],
         usersWaves: [],
-        worksWaves: [],
       },
     weekly:
       {
@@ -124,7 +103,6 @@
         successful_tasks: [],
         motivations: [],
         usersWaves: [],
-        worksWaves: [],
       },
     monthly:
       {
@@ -135,7 +113,6 @@
         successful_tasks: [],
         motivations: [],
         usersWaves: [],
-        worksWaves: [],
       },
   }
 
@@ -148,7 +125,6 @@
     // motivationは1日に複数ある場合があるが、平均を1日の代表値として扱う
     show_data.daily.motivations[<%= i %>] = "<%= Math.round(data.graph_data[i].motivations.reduce((sum,i) => sum + i.motivation, 0) / data.graph_data[i].motivations.length * Math.pow(10,2)) / Math.pow(10,2) %>";
     show_data.daily.usersWaves[<%= i %>] = "<%= data.graph_data[i].waves[0].value %>";
-    show_data.daily.worksWaves[<%= i %>] = "<%= data.graph_data[i].worksWaves[0].value %>";
   <% } %>
 
   // 週ごとにまとめる(日曜～土曜分をひとまとめにする)
@@ -187,86 +163,10 @@
   }
 
   let DayType = "daily";
-  let prevDataToAdd = "none";
-  let prevDataToAdd2 = "none";
-  let prevDataToAdd3 = "none";
-  function drawChart(dayType = "none"){
-    let eDataToAdd = document.getElementById('DataToAdd');
-    let eDataToAdd2 = document.getElementById('DataToAdd2');
-    let eDataToAdd3 = document.getElementById('DataToAdd3');
-    let eDataToAdd4 = document.getElementById('DataToAdd4');
-    let DataToAdd = eDataToAdd.options[eDataToAdd.selectedIndex].value;
-    let DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value;
-    let DataToAdd3 = eDataToAdd3.options[eDataToAdd3.selectedIndex].value;
-    let DataToAdd4 = eDataToAdd4.options[eDataToAdd4.selectedIndex].value;
-
-    let strArray = ['<option value="data_task_bar">タスク達成数</option>','<option value="data_Motivation">モチベーション</option>','<option value="data_UserWave">ユーザの波</option>','<option value="data_WorkWave">ワークの波</option>'];
-    let strValueArray = ['data_task_bar','data_Motivation','data_UserWave','data_WorkWave'];
-    let clearStr = function(arr){
-      let nullstr = '<option value="none">無し</option>';
-      for(i of arr){
-        i.innerHTML = nullstr;
-        if(i.id == "DataToAdd2") DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value; 
-        if(i.id == "DataToAdd3") DataToAdd3 = eDataToAdd3.options[eDataToAdd3.selectedIndex].value; 
-        if(i.id == "DataToAdd4") DataToAdd4 = eDataToAdd4.options[eDataToAdd4.selectedIndex].value; 
-      }
-    }
-    if(DataToAdd != prevDataToAdd){
-      clearStr([eDataToAdd2,eDataToAdd3,eDataToAdd4]);
-      prevDataToAdd = DataToAdd;
-      let eInd = 0;
-      let insertElm2 = strValueArray.filter(function(x,index){
-        if(x == DataToAdd) eInd = index;
-        return x != DataToAdd;
-      });
-      insertElm2 = strArray.filter(function(x,index){
-        return index != eInd;
-      });
-      for(i of insertElm2){
-        eDataToAdd2.insertAdjacentHTML('beforeend', i);
-      }
-    }
-    if(DataToAdd2 != prevDataToAdd2){
-      clearStr([eDataToAdd3,eDataToAdd4]);
-      prevDataToAdd2 = DataToAdd2;
-      let eInd = [];
-      let insertElm3 = strValueArray.filter(function(x,index){
-        if(x == DataToAdd || x == DataToAdd2) eInd.push(index);
-        return (x != DataToAdd && x != DataToAdd2);
-      });
-      insertElm3 = strArray.filter(function(x,index){
-        if(eInd.indexOf(index) !== -1) return false;
-        else return true;
-      });
-      if(DataToAdd2 != 'none'){
-        for(i of insertElm3){
-          eDataToAdd3.insertAdjacentHTML('beforeend', i);
-        }
-      }
-    }
-    if(DataToAdd3 != prevDataToAdd3){
-      clearStr([eDataToAdd4]);
-      prevDataToAdd3 = DataToAdd3;
-      let eInd = [];
-      let insertElm4 = strValueArray.filter(function(x,index){
-        if((x == DataToAdd || x == DataToAdd2) || x == DataToAdd3) eInd.push(index);
-        return ((x != DataToAdd && x != DataToAdd2) && x != DataToAdd3);
-      });
-      insertElm4 = strArray.filter(function(x,index){
-        if(eInd.indexOf(index) !== -1) return false;
-        else return true;
-      });
-      if(DataToAdd3 != 'none'){
-        for(i of insertElm4){
-          eDataToAdd4.insertAdjacentHTML('beforeend', i);
-        }
-      }
-    } 
-    
+  function drawChart(dayType = "none", DataToAdd = "none"){
     if(dayType == "none") dayType = DayType;
     else DayType = dayType;
     let display = {};
-
     // 横スクロールできるように
     // https://qiita.com/yutake27/items/fa7b1f6b3c7c65e9d69b
     let xAxisLabelMinWidth = 60, width;
@@ -297,8 +197,45 @@
     ctx.style.width = width+"px";
     ctx.style.height = "450px";
     let data = {
-      datasets: [],
-      labels: display.labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: '設定したタスク',
+          data: display.tasks,
+          yAxisID: 'task_bar',
+          datalabels:{
+            display: false
+          },
+        },
+        {
+          type: 'bar',
+          label: '開始できたタスク',
+          data: display.started_tasks,
+          yAxisID: 'task_bar',
+          datalabels:{
+            display: false
+          },
+        },
+        {
+          type: 'bar',
+          label: '終了できたタスク',
+          data: display.finished_tasks,
+          yAxisID: 'task_bar',
+          datalabels:{
+            display: false
+          },
+        },
+        {
+          type: 'bar',
+          label: '成功したタスク',
+          data: display.successful_tasks,
+          yAxisID: 'task_bar',
+          datalabels:{
+            display: false
+          },
+        },
+      ],
+      labels: display.labels
     };
 
     let options = {
@@ -311,7 +248,7 @@
       plugins: {
         title: {
           display: true,
-          text: 'タスク取組状況',
+          text: 'タスク達成数',
           align: "start"
         },
         legend: {
@@ -319,105 +256,7 @@
         },
       },
       scales: {
-      },
-    }
-    for(data_i of [DataToAdd, DataToAdd2,DataToAdd3,DataToAdd4]){
-      if(data_i == "none") continue;
-      if(data_i == "data_Motivation"){
-        data.datasets.push({
-          type: 'line',
-          label: 'ユーザのモチベーション',
-          data: display.motivations,
-          yAxisID: 'wave_line',
-          datalabels:{
-            align: 'top',
-            color: '#FF0000',
-          },
-        });
-        options.scales['wave_line'] = {
-          position: 'right',
-          min: -1.1,
-          max: 1.1,
-        }
-        // options.scales['motivation_line'] = {
-        //   position: 'right',
-        //   min: -1.1,
-        //   max: 1.1,
-        // };
-      }else if(data_i == "data_UserWave"){
-        data.datasets.push({
-          type: 'line',
-          label: 'ユーザの波',
-          lineTension: 0.3,
-          data: display.usersWaves,
-          yAxisID: 'wave_line',
-          datalabels:{
-            align: 'top',
-            color: "#FF0000",
-          }
-        });
-        options.scales['wave_line'] = {
-          position: 'right',
-          min: -1.1,
-          max: 1.1,
-        }
-      }else if(data_i == "data_WorkWave"){
-        data.datasets.push({
-          type:'line',
-          label: 'ワークの波',
-          lineTension: 0.3,
-          data: display.worksWaves,
-          yAxisID: 'wave_line',
-          datalabels:{
-            align: 'top',
-            color: "#FF0000",
-          }
-        });
-        options.scales['wave_line'] = {
-          position: 'right',
-          min: -1.1,
-          max: 1.1,
-        }
-      }else if(data_i == "data_task_bar"){
-        data.datasets.push(
-          {
-            type: 'bar',
-            label: '設定したタスク',
-            data: display.tasks,
-            yAxisID: 'task_bar',
-            datalabels:{
-              display: false
-            },
-          },
-          {
-            type: 'bar',
-            label: '開始できたタスク',
-            data: display.started_tasks,
-            yAxisID: 'task_bar',
-            datalabels:{
-              display: false
-            },
-          },
-          {
-            type: 'bar',
-            label: '終了できたタスク',
-            data: display.finished_tasks,
-            yAxisID: 'task_bar',
-            datalabels:{
-              display: false
-            },
-          },
-          {
-            type: 'bar',
-            label: '成功したタスク',
-            data: display.successful_tasks,
-            yAxisID: 'task_bar',
-            datalabels:{
-              display: false
-            },
-          },
-        );
-        options.scales.task_bar = {
+        'task_bar': {
           // 小数点を隠す
           ticks:{
             precision: 0,
@@ -425,7 +264,42 @@
           beginAtZero: true,
           suggestedMax: 3,
           position: 'left',
+        },
+      }
+    }
+
+    if(DataToAdd == "data_Motivation"){
+      data.datasets.push({
+        type: 'line',
+        label: 'test',
+        data: display.motivations,
+        yAxisID: 'motivation_line',
+        datalabels:{
+          align: 'top',
+          color: '#FF0000',
+        },
+      });
+      options.scales['motivation_line'] = {
+        position: 'right',
+        beginAtZero: true,
+        max: 1.0,
+      };
+    }else if(DataToAdd == "data_UserWave"){
+      data.datasets.push({
+        type: 'line',
+        label: 'test',
+        lineTension: 0.3,
+        data: display.usersWaves,
+        yAxisID: 'wave_line',
+        datalabels:{
+          align: 'top',
+          color: "#FF0000",
         }
+      });
+      options.scales['wave_line'] = {
+        position: 'right',
+        min: -1.1,
+        max: 1.1,
       }
     }
     draw(data, options);

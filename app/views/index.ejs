@@ -1,12 +1,10 @@
 <%- include('partials/header'); %>
 
 <div class="m-4 p-7">
-  <div class="w-auto inline-block">
-    <ul class="[&>li]:p-2 [&>li]:border-b-4">
-      <li>前回のシミュレーション実行時刻: <b><%= func.ddate(logs.updatedAt) %></b></li>
-      <li>simulating date: <b><%= func.ddate(logs.startedAt) + " ～ " + func.ddate(logs.finishedAt) %></b></li>
-    </ul>
-  </div>
+  <ul class="w-[27.5rem] [&>li]:p-2 [&>li]:border-b-4">
+    <li>前回のシミュレーション実行時刻: <b><%= func.ddate(logs.updatedAt) %></b></li>
+    <li>simulating date: <b><%= func.ddate(logs.startedAt) + " ～ " + func.ddate(logs.finishedAt) %></b></li>
+  </ul>
 
   <div class="mt-10 text-xl font-bold">シミュレーション設定</div>
   <form class="my-6 w-full max-w-sm">

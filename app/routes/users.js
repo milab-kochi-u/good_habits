@@ -3,7 +3,6 @@ var router = express.Router();
 var models = require('../models/index.js');
 var func = require('../op_tools/functions.js');
 const dayjs = require('dayjs');
-const work = require('../models/work.js');
 
 /* GET users listing. */
 router.get('/', async function(req, res, next) {
@@ -25,19 +24,11 @@ router.get('/:id', async function(req, res, next){
   const diff = dayjs(sim_log.finishedAt).diff(userStartDay,'day');
   const usersMotivations = JSON.parse(JSON.stringify(await user.getUsersMotivations()));
   const usersWaves = JSON.parse(JSON.stringify(await user.getUsersWaves()));
-  // ---- Warn ----
-    // 以下はワークが1人単一だと仮定した場合の処理に留意すること
-  const usersWork = (await user.getWorks())[0];
-  const worksWaves = JSON.parse(JSON.stringify(await usersWork.getWorksWaves()));
-  // ---- Warn ----
   for(let i = 0;i <= diff; i++){
     const motivations_day_i = usersMotivations.filter(elm => {
       return dayjs(elm.createdAt).format('YYYY/MM/DD') == userStartDay.add(i,'d').format('YYYY/MM/DD');
     });
     const waves_day_i = usersWaves.filter(elm => {
-      return dayjs(elm.date).format('YYYY/MM/DD') == userStartDay.add(i,'d').format('YYYY/MM/DD');
-    });
-    const work_waves_day_i = worksWaves.filter(elm => {
       return dayjs(elm.date).format('YYYY/MM/DD') == userStartDay.add(i,'d').format('YYYY/MM/DD');
     });
     graph_data[i] = {
@@ -48,7 +39,6 @@ router.get('/:id', async function(req, res, next){
       successful_task:0,
       motivations: motivations_day_i,
       waves: waves_day_i,
-      worksWaves: work_waves_day_i,
     }
     // console.log("graph_data[", i,"]={x:",graph_data[i].x,", y:", graph_data[i].y,"}");
   }
