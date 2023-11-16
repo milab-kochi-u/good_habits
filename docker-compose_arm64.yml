@@ -3,7 +3,9 @@ services:
     app:
         build:
             context: "./"
-            dockerfile: "Dockerfile_mac"
+            dockerfile: "Dockerfile_arm64"
+        container_name: simulation-container
+        hostname: simulation-server
         volumes:
             # マウントの高速化
             - ./app:/app
@@ -20,7 +22,26 @@ services:
             - CHOKIDAR_USEPOLLING=1
             # この2行で日時を設定
             - LD_PRELOAD=/usr/local/lib/faketime/libfaketimeMT.so.1
-
+        networks:
+            - good-habits-network
         command: /bin/bash -c "npm run start-dev"
+    pyapp:
+        build:
+            context: "./pyApp"
+            dockerfile: "./Dockerfile_arm64"
+        container_name: recommend-container
+        hostname: recommend-server
+        volumes:
+            - ./pyApp/app:/code/app
+        ports:
+          - "8888:80"
+        tty: true
+        networks:
+            - good-habits-network
+
 volumes:
     exclude_node_modules:
+networks:
+    good-habits-network:
+        name: good-habits-network
+        driver: bridge

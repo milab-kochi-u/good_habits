@@ -70,6 +70,8 @@ const fs = require('fs').promises;
                 label: scheme.label,
                 waveLength: scheme.waveLength,
                 initialPhase: scheme.initialPhase,
+                chemistry_featureOfStart: scheme.chemistry_featureOfStart,
+                chemistry_featureOfComplete: scheme.chemistry_featureOfComplete,
             });
             for (let n = 0; n < categories.length; n++) {
                 await models.SchemesCategoryPriority.create({

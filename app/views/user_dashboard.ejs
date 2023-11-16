@@ -6,19 +6,19 @@
   </div>
   <div class="px-3 py-2">
     <% for (var user of users) {  %>
-      <div class="p-2 flex justify-center">
-        <ul class="flex justify-between [&>li]:p-2 [&>li]:border-b">
-          <li class="w-[8rem]">name: <a class="underline text-blue-400" href="<%= link.user %>/<%= user.id %>"><%= user.name %></a></li>
-          <li class="w-[10.5rem]">waveLength: <%= user.waveLength %></li>
-          <li class="w-[8.5rem]">initialPhase: <%= user.initialPhase %></li>
-          <li class="w-[7.5rem]">startDays: <%= user.startDays %></li>
-          <li class="w-[11rem]">initialMotivation: <%= user.initialMotivation %></li>
-          <li class="w-[10.5rem]">振り返り間隔(日): <%= user.intervalDaysForSelfReflection %></li>
+      <div class="w-auto inline-block p-2 flex justify-center">
+        <ul class="flex justify-between [&>li]:w-auto [&>li]:p-2 [&>li]:m-2 [&>li]:border-b">
+          <li class="">name: <a class="underline text-blue-400" href="<%= link.user %>/<%= user.id %>"><%= user.name %></a></li>
+          <li class="">waveLength: <%= user.waveLength %></li>
+          <li class="">initialPhase: <%= user.initialPhase %></li>
+          <li class="">startDays: <%= user.startDays %></li>
+          <li class="">initialMotivation: <%= user.initialMotivation %></li>
+          <li class="">振り返り間隔(日): <%= user.intervalDaysForSelfReflection %></li>
           <% var d = user.lastSelfReflectedAt ? new Date(user.lastSelfReflectedAt) : null %>
           <% var dp = d ? d.toLocaleString('ja-JP') : "null" %>
-          <li class="w-[18rem]">前回の振り返り日: <%= dp %></li>
-          <li class="w-[11rem]">ワーク変更閾値: <%= user.thresholdOfWorkChanging %></li>
-          <li class="w-[10rem]">工夫変更閾値: <%= user.thresholdOfSchemeChanging %></li>
+          <li class="">前回の振り返り日: <%= dp %></li>
+          <li class="">ワーク変更閾値: <%= user.thresholdOfWorkChanging %></li>
+          <li class="">工夫変更閾値: <%= user.thresholdOfSchemeChanging %></li>
         </ul>
       </div>
     <% } %>

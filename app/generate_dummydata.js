@@ -9,7 +9,7 @@ const rangeOfCycleDays = [-10,10];	// 波長の周期の日数の範囲
 // TODO:乱数の出力は整数であり，日数単位として扱っているので，今後時間単位の乱数として扱いたい
 
 const numberOfCategories = 3;	// 1 にする場合は possibilityOfMultiCategory は 0 にすること
-const numberOfUsers = 5;
+const numberOfUsers = 20;
 const numberOfWorks = 1;
 const numberOfSchemes = 100;
 const possibilityOfMultiCategory = 0.3;	// 複数のカテゴリにまたがる可能性
@@ -87,6 +87,11 @@ for (let i = 0; i < numberOfSchemes; i++) {
 	const num = ('0'.repeat(schemeDigits) + (i+1)).slice(-1 * schemeDigits);
 	// const waveLength = mathlib.getRandomInt(rangeOfCycleDays) * 24 + mathlib.getRandomInt(rangeOfCycleHours['scheme']);
 	const waveLength = mathlib.getRandomInt(rangeOfCycleDays);
+
+	let chemistry_featureOfStart = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
+
+	let chemistry_featureOfComplete = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
+
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const scheme = {
@@ -94,7 +99,10 @@ for (let i = 0; i < numberOfSchemes; i++) {
 		'waveLength': waveLength,
 		'initialPhase': initialPhase,
 		'priorityOfCategory': priorityOfCategory,
+		'chemistry_featureOfStart': chemistry_featureOfStart,
+		'chemistry_featureOfComplete': chemistry_featureOfComplete,
 	};
+
 	schemes.push(scheme);
 }
 // console.log(schemes);
@@ -109,19 +117,16 @@ for (let i = 0; i < numberOfUsers; i++) {
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
 	const startDays = mathlib.getRandomInt([0, numberOfDaysForExperiment / 3]);
-	const initialMotivation = mathlib.round(mathlib.getRandomInt(rangeOfInitialMotivation) / 100.0);
+	// const initialMotivation = mathlib.round(mathlib.getRandomInt(rangeOfInitialMotivation) / 100.0);
+	const initialMotivation = mathlib.round(mathlib.rnorm(0.2,0.5));
 	const intervalDaysForSelfReflection = candidatesOfIntervalDaysForSelfReflection[mathlib.getRandomInt([0, candidatesOfIntervalDaysForSelfReflection.length])];
 	const thresholdOfWorkChanging = mathlib.round(mathlib.getRandomInt(rangeOfThresholdOfWorkChanging) / 100.0);
 	// const thresholdOfSchemeChanging = mathlib.round(mathlib.getRandomInt(rangeOfThresholdOfSchemeChanging) / 100.0);
 	const thresholdOfSchemeChanging = mathlib.round(thresholdOfWorkChanging * 4);
 
-	let featureOfStart = mathlib.round(mathlib.rnorm(0.2,0.5));
-	if(featureOfStart < 0){ featureOfStart = 0; }
-	else if(featureOfStart > 1){ featureOfStart = 1}
+	let featureOfStart = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
 
-	let featureOfComplete = mathlib.round(mathlib.rnorm(0.2,0.5));
-	if(featureOfComplete < 0){ featureOfComplete = 0; }
-	else if(featureOfComplete > 1){ featureOfComplete = 1}
+	let featureOfComplete = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
 
 	// TODO: これを正規分布に合わせる
 	const user = {

@@ -1,5 +1,11 @@
 #!/bin/bash
 
+echo "PID=$$ PPID=$PPID"
+if [ $$ -ne $(pgrep -fo "$0") ]; then
+	echo "[ERROR]既に起動されています"
+	exit 1
+fi
+
 help(){
 	cat <<- EOS
 
@@ -15,7 +21,21 @@ help(){
 	--no-sim:
 	    シミュレーションを実行しません．
 	--data-gen:
-	    プロファイルを再作成します．
+	    プロファイルを再作成し，DBに読み込みます．
+	--read-db:
+	    ※ このオプションを使用した場合ダミーデータの生成とシミュレーションは実施されません．
+	    ./dummydata.json に記載の内容を./db-dev.sqlite3 にインポートします．
+	--backup [fileName]:
+	    ※ このオプションは他のオプションより優先して実行されます．
+	    コマンド実行時点でのdummydata.jsonとdb-dev.sqlite3のコピーファイルを以下のように保存します．
+	    ./backups/fileName.json, ./backups/fileName.sqlite3
+	    拡張子は記述しないでください．
+	--replace [fileName]:
+	    ※ このオプションを使用した場合ダミーデータの生成とシミュレーションは実施されません．
+	    引数に入力したファイル名に該当する
+	    fileName.json, fileName.sqlite3ファイルを
+	    ./dummydata.json, ./db-dev.sqlite3　に上書きします．
+	    拡張子は記述しないでください．
 	EOS
 	exit 0
 }
@@ -34,7 +54,7 @@ date_validate(){
 		# BSD date
 		(date -j -f '%Y/%m/%d' "$1") > /dev/null 2>&1 || (date -j -f '%Y-%m-%d' "$1") > /dev/null 2>&1 || res=1
 	fi
-    return $res
+	return $res
 }
 
 dateinit(){
@@ -57,18 +77,24 @@ exec_simulation(){
 	node simulate.js --init "${SETDATE}" -d "${SETDAYS}"
 }
 
+# バックアップファイルの生成
+backup_files(){
+	cp "./dummydata.json" "./backups/$1.json"
+	cp "./db-dev.sqlite3" "./backups/$1.sqlite3"
+}
 
-# シミュレーションの実行
-# -- 過去のシミュレーションの続きとして1000日間のシミュレーションを行う
-# node simulate.js -d 335
+# バックアップファイルの適用
+replace_files(){
+	if [ -f "./backups/$1.json" ] && [ -f "./backups/$1.sqlite3" ]; then
+		cp "./backups/$1.json" "./dummydata.json"
+		cp "./backups/$1.sqlite3" "./db-dev.sqlite3"
+	else
+		echo "[ERROR] $1.json または $1.sqlite3 が存在しません．"
+		exit 1
+	fi
+}
 
-# 以下は今後作成予定...
-
-# シミュレーション結果の概要の出力
-# -- user001 の行動の概略を出力する
-# node show_simulation_result.js user001
-
-# https://zenn.dev/takakiriy/articles/e65780261dd5e3
+# 2023.11.6閲覧 【最終完全版】 bash/zsh 用オプション解析テンプレート (getopts→shift) https://zenn.dev/takakiriy/articles/e65780261dd5e3
 SETDATE="2020-01-01"
 SETTIME="00:00:00"
 SETDAYS="10"
@@ -77,6 +103,7 @@ FLAG_READDATA="NO"
 FLAG_SIMULATE="YES"
 while [[ $# -gt 0 ]]; do
 	case $1 in
+		# ---- param options ----
 		-i|--init)
 			if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
 			case $2 in
@@ -87,13 +114,38 @@ while [[ $# -gt 0 ]]; do
 					if ! date_validate $2 ; then echo "[ERROR] $1 parameter must be in date format." ; exit 1 ; fi
 					if [[ "$2" =~ ([a-zA-Z]+) ]]; then echo "[ERROR] $1 parameter must be in date format." ; exit 1 ; fi
 					SETDATE=$2 ; shift ; shift
-					;;
 			esac
 			;;
 		-D|--Day)
-			if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
-			if [[ ! "$2" =~ (^[1-9][0-9]*) ]] || [[ "${BASH_REMATCH[0]}" != "$2" ]]; then echo "[ERROR] $1 parameter must be in non zero interger." ; exit 1 ; fi
-			SETDAYS="$2" ; shift ; shift
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					if [[ ! "$2" =~ (^[1-9][0-9]*) ]] || [[ "${BASH_REMATCH[0]}" != "$2" ]]; then echo "[ERROR] $1 parameter must be in non zero interger." ; exit 1 ; fi
+					SETDAYS="$2" ; shift ; shift
+			esac
+			;;
+		--backup)
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					backup_files $2 ; shift ; shift
+			esac
+			;;
+		--replace)
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					replace_files $2 ; exit 0
+			esac
 			;;
 
 		# ---- flag options ----
@@ -103,6 +155,9 @@ while [[ $# -gt 0 ]]; do
 		--data-gen)
 			FLAG_GENERATEDATA="YES"
 			FLAG_READDATA="YES" ; shift
+			;;
+		--read-db)
+			read_dummydata ; exit 0
 			;;
 		--help)
 			help ; shift
@@ -121,7 +176,6 @@ while [[ $# -gt 0 ]]; do
 						;;
 					*) 
 						echo "[ERROR] Unknown option -${OPTIONS:$i:1}" ; exit 1
-						;;
 				esac
 			done
 			unset OPTIONS ; shift
@@ -129,7 +183,6 @@ while [[ $# -gt 0 ]]; do
 
 		*)
 			echo "[ERROR] Unknown option $1" ; exit 1
-			;;
 	esac
 done
 

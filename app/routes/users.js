@@ -20,7 +20,7 @@ router.get('/:id', async function(req, res, next){
   let graph_data = [];
   const user = await models.User.findByPk(req.params['id']);
   const sim_log = await models.SimulationLog.findOne({order: [ ['updatedAt', 'DESC']]});
-  const userStartDay = dayjs(sim_log.startedAt).add(user.startDays-1,'d');
+  const userStartDay = dayjs(sim_log.startedAt).add(user.startDays,'d');
   const diff = dayjs(sim_log.finishedAt).diff(userStartDay,'day');
   const usersMotivations = JSON.parse(JSON.stringify(await user.getUsersMotivations()));
   const usersWaves = JSON.parse(JSON.stringify(await user.getUsersWaves()));

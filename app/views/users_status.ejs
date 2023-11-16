@@ -13,11 +13,34 @@
     <button type="button" id="graph_weekly" onClick="drawChart('weekly'); selectClear()" class="inline-block back_btn1">グラフを週毎に変更</button>
     <button type="button" id="graph_monthly" onClick="drawChart('monthly'); selectClear()" class="inline-block back_btn1">グラフを月毎に変更</button>
     <div class="mx-3 inline-block">
-      <label for="DataToAdd" class="block mb-2 text-sm font-medium text-gray-900">追加で描画するデータ</label>
-      <select id="DataToAdd" onChange="drawChart('none',this.value)" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
-        <option value="none" selected>無し</option>
-        <option value="data_Motivation">モチベーション</option>
+      <label for="DataToAdd" class="block mb-2 text-sm font-medium text-gray-900">第1系列に描画するデータ</label>
+      <select id="DataToAdd" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="data_task_bar">タスク達成数</option>
+        <option value="base_Motivation">基礎モチベーション</option>
         <option value="data_UserWave">ユーザの波</option>
+        <option value="data_WorkWave">ワークの波</option>
+        <option value="total_Motivation">総合モチベーション</option>
+        <option value="motiv_need_to_getStart">タスク開始に必要なモチベーション</option>
+        <option value="motiv_need_to_getItDone">タスク終了に必要なモチベーション</option>
+      </select>
+    </div>
+    <!-- <div class="mx-3 inline-block"> -->
+    <div class="mx-3 mb-8 inline-block">
+      <label for="DataToAdd2" class="block mb-2 text-sm font-medium text-gray-900">第2系列に描画するデータ</label>
+      <select id="DataToAdd2" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="none" selected>無し</option>
+      </select>
+    </div>
+    <div class="mx-3 mb-8 inline-block">
+      <label for="DataToAdd3" class="block mb-2 text-sm font-medium text-gray-900">第3系列に描画するデータ</label>
+      <select id="DataToAdd3" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="none" selected>無し</option>
+      </select>
+    </div>
+    <div class="mx-3 mb-8 inline-block">
+      <label for="DataToAdd4" class="block mb-2 text-sm font-medium text-gray-900">第4系列に描画するデータ</label>
+      <select id="DataToAdd4" onChange="drawChart('none')" class="block bg-gray-200 font-bold shadow-lg border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <option value="none" selected>無し</option>
       </select>
     </div>
     <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -91,7 +114,10 @@
         started_tasks: [],
         finished_tasks: [],
         successful_tasks: [],
-        motivations: [],
+        base_motivations: [],
+        total_motivations: [],
+        motiv_need_to_getStart: [],
+        motiv_need_to_getItDone: [],
         usersWaves: [],
       },
     weekly:
@@ -101,7 +127,10 @@
         started_tasks: [],
         finished_tasks: [],
         successful_tasks: [],
-        motivations: [],
+        base_motivations: [],
+        total_motivations: [],
+        motiv_need_to_getStart: [],
+        motiv_need_to_getItDone: [],
         usersWaves: [],
       },
     monthly:
@@ -111,21 +140,54 @@
         started_tasks: [],
         finished_tasks: [],
         successful_tasks: [],
-        motivations: [],
+        base_motivations: [],
+        total_motivations: [],
+        motiv_need_to_getStart: [],
+        motiv_need_to_getItDone: [],
         usersWaves: [],
       },
   }
 
-  <% for(var i = 0; i < data.graph_data.length; i++){ %>
-    show_data.daily.labels[<%= i %>] = dayjs("<%= data.graph_data[i].x %>").format('YYYY.MM.DD');
-    show_data.daily.tasks[<%= i %>] = "<%= data.graph_data[i].task %>";
-    show_data.daily.started_tasks[<%= i %>] = "<%= data.graph_data[i].started_task %>";
-    show_data.daily.finished_tasks[<%= i %>] = "<%= data.graph_data[i].finished_task %>";
-    show_data.daily.successful_tasks[<%= i %>] = "<%= data.graph_data[i].successful_task %>";
+  let data_arr = <%- JSON.stringify(data.graph_data) %>;
+  for(var i = 0; i < data_arr.length; i++){
+    show_data.daily.labels[i] = dayjs(data_arr[i].x).format('YYYY.MM.DD');
+    show_data.daily.tasks[i] = data_arr[i].task;
+    show_data.daily.started_tasks[i] = data_arr[i].started_task;
+    show_data.daily.finished_tasks[i] = data_arr[i].finished_task;
+    show_data.daily.successful_tasks[i] = data_arr[i].successful_task;
     // motivationは1日に複数ある場合があるが、平均を1日の代表値として扱う
-    show_data.daily.motivations[<%= i %>] = "<%= Math.round(data.graph_data[i].motivations.reduce((sum,i) => sum + i.motivation, 0) / data.graph_data[i].motivations.length * Math.pow(10,2)) / Math.pow(10,2) %>";
-    show_data.daily.usersWaves[<%= i %>] = "<%= data.graph_data[i].waves[0].value %>";
-  <% } %>
+    let base_motiv_avg = 0, total_motiv_avg = 0, getStart_avg = 0, getItDone_avg = 0;
+    let base_cnt = 0, total_cnt = 0, getStart_cnt = 0, getItDone_cnt = 0;
+    for( j of data_arr[i].motivations){
+      if(j.motivation){
+        base_motiv_avg += j.motivation;
+        base_cnt += 1;
+      }
+      if(j.totalMotivation){
+        total_motiv_avg += j.totalMotivation;
+        total_cnt += 1;
+      }
+      if(j.motiv_need_to_getStart){
+        getStart_avg += j.motiv_need_to_getStart;
+        getStart_cnt += 1;
+      }
+      if(j.motiv_need_to_getItDone){
+        getItDone_avg += j.motiv_need_to_getItDone;
+        getItDone_cnt += 1;
+      }
+    }
+    base_motiv_avg = Math.round(base_motiv_avg / base_cnt * Math.pow(10,2)) / Math.pow(10,2);
+    total_motiv_avg = Math.round(total_motiv_avg / total_cnt * Math.pow(10,2)) / Math.pow(10,2);
+    getStart_avg = Math.round(getStart_avg / getStart_cnt * Math.pow(10,2)) / Math.pow(10,2);
+    getItDone_avg = Math.round(getItDone_avg / getItDone_cnt * Math.pow(10,2)) / Math.pow(10,2);
+    show_data.daily.base_motivations[i] = base_motiv_avg;
+    show_data.daily.total_motivations[i] = total_motiv_avg;
+    show_data.daily.motiv_need_to_getStart[i] = getStart_avg;
+    show_data.daily.motiv_need_to_getItDone[i] = getItDone_avg;
+    console.log(data_arr[i]);
+    show_data.daily.usersWaves[i] = data_arr[i].waves[0].value;
+    show_data.daily.worksWaves[i] = data_arr[i].worksWaves[0].value;
+  }
 
   // 週ごとにまとめる(日曜～土曜分をひとまとめにする)
   // 日:0, 土:6
@@ -142,18 +204,18 @@
       show_data.weekly.started_tasks[show_data.weekly.started_tasks.length] = Number(show_data.daily.started_tasks[i]);
       show_data.weekly.finished_tasks[show_data.weekly.finished_tasks.length] = Number(show_data.daily.finished_tasks[i]);
       show_data.weekly.successful_tasks[show_data.weekly.successful_tasks.length] = Number(show_data.daily.successful_tasks[i]);
-      show_data.weekly.motivations[show_data.weekly.motivations.length] = [Number(show_data.daily.motivations[i])];
+      show_data.weekly.base_motivations[show_data.weekly.base_motivations.length] = [Number(show_data.daily.base_motivations[i])];
     }else{
       show_data.weekly.tasks[weekly_task_index] += Number(show_data.daily.tasks[i]);
       show_data.weekly.started_tasks[weekly_task_index] += Number(show_data.daily.started_tasks[i]);
       show_data.weekly.finished_tasks[weekly_task_index] += Number(show_data.daily.finished_tasks[i]);
       show_data.weekly.successful_tasks[weekly_task_index] += Number(show_data.daily.successful_tasks[i]);
-      show_data.weekly.motivations[weekly_task_index].push(Number(show_data.daily.motivations[i]));
+      show_data.weekly.base_motivations[weekly_task_index].push(Number(show_data.daily.base_motivations[i]));
     }
   }
-  for(const [index,item] of show_data.weekly.motivations.entries()){
+  for(const [index,item] of show_data.weekly.base_motivations.entries()){
     let sum = item.reduce((prev, elm) => prev + elm);
-    show_data.weekly.motivations[index] = Math.round(sum / item.length * Math.pow(10,2)) / Math.pow(10,2);
+    show_data.weekly.base_motivations[index] = Math.round(sum / item.length * Math.pow(10,2)) / Math.pow(10,2);
   }
   
   function selectClear(){
@@ -163,7 +225,86 @@
   }
 
   let DayType = "daily";
-  function drawChart(dayType = "none", DataToAdd = "none"){
+  let prevDataToAdd = "none";
+  let prevDataToAdd2 = "none";
+  let prevDataToAdd3 = "none";
+  function drawChart(dayType = "none"){
+    let eDataToAdd = document.getElementById('DataToAdd');
+    let eDataToAdd2 = document.getElementById('DataToAdd2');
+    let eDataToAdd3 = document.getElementById('DataToAdd3');
+    let eDataToAdd4 = document.getElementById('DataToAdd4');
+    let DataToAdd = eDataToAdd.options[eDataToAdd.selectedIndex].value;
+    let DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value;
+    let DataToAdd3 = eDataToAdd3.options[eDataToAdd3.selectedIndex].value;
+    let DataToAdd4 = eDataToAdd4.options[eDataToAdd4.selectedIndex].value;
+
+    let strArray = [];
+    let strValueArray = [];
+    for(let elm of eDataToAdd.options){
+      strArray.push(elm.outerHTML);
+      strValueArray.push(elm.value);
+    }
+    let clearStr = function(arr){
+      let nullstr = '<option value="none">無し</option>';
+      for(i of arr){
+        i.innerHTML = nullstr;
+        if(i.id == "DataToAdd2") DataToAdd2 = eDataToAdd2.options[eDataToAdd2.selectedIndex].value; 
+        if(i.id == "DataToAdd3") DataToAdd3 = eDataToAdd3.options[eDataToAdd3.selectedIndex].value; 
+        if(i.id == "DataToAdd4") DataToAdd4 = eDataToAdd4.options[eDataToAdd4.selectedIndex].value; 
+      }
+    }
+    if(DataToAdd != prevDataToAdd){
+      clearStr([eDataToAdd2,eDataToAdd3,eDataToAdd4]);
+      prevDataToAdd = DataToAdd;
+      let eInd = 0;
+      let insertElm2 = strValueArray.filter(function(x,index){
+        if(x == DataToAdd) eInd = index;
+        return x != DataToAdd;
+      });
+      insertElm2 = strArray.filter(function(x,index){
+        return index != eInd;
+      });
+      for(i of insertElm2){
+        eDataToAdd2.insertAdjacentHTML('beforeend', i);
+      }
+    }
+    if(DataToAdd2 != prevDataToAdd2){
+      clearStr([eDataToAdd3,eDataToAdd4]);
+      prevDataToAdd2 = DataToAdd2;
+      let eInd = [];
+      let insertElm3 = strValueArray.filter(function(x,index){
+        if(x == DataToAdd || x == DataToAdd2) eInd.push(index);
+        return (x != DataToAdd && x != DataToAdd2);
+      });
+      insertElm3 = strArray.filter(function(x,index){
+        if(eInd.indexOf(index) !== -1) return false;
+        else return true;
+      });
+      if(DataToAdd2 != 'none'){
+        for(i of insertElm3){
+          eDataToAdd3.insertAdjacentHTML('beforeend', i);
+        }
+      }
+    }
+    if(DataToAdd3 != prevDataToAdd3){
+      clearStr([eDataToAdd4]);
+      prevDataToAdd3 = DataToAdd3;
+      let eInd = [];
+      let insertElm4 = strValueArray.filter(function(x,index){
+        if((x == DataToAdd || x == DataToAdd2) || x == DataToAdd3) eInd.push(index);
+        return ((x != DataToAdd && x != DataToAdd2) && x != DataToAdd3);
+      });
+      insertElm4 = strArray.filter(function(x,index){
+        if(eInd.indexOf(index) !== -1) return false;
+        else return true;
+      });
+      if(DataToAdd3 != 'none'){
+        for(i of insertElm4){
+          eDataToAdd4.insertAdjacentHTML('beforeend', i);
+        }
+      }
+    } 
+    
     if(dayType == "none") dayType = DayType;
     else DayType = dayType;
     let display = {};
@@ -256,7 +397,153 @@
         },
       },
       scales: {
-        'task_bar': {
+      },
+    }
+    for(data_i of [DataToAdd, DataToAdd2,DataToAdd3,DataToAdd4]){
+      if(data_i == "none") continue;
+      if(data_i == "base_Motivation"){
+        data.datasets.push({
+          type: 'line',
+          label: 'ユーザの基礎モチベーション',
+          data: display.base_motivations,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+            color: '#FF0000',
+          },
+        });
+        options.scales['wave_line'] = {
+          position: 'right',
+          min: -1.1,
+          max: 1.1,
+        }
+        // options.scales['motivation_line'] = {
+        //   position: 'right',
+        //   min: -1.1,
+        //   max: 1.1,
+        // };
+      }else if(data_i == "total_Motivation"){
+        data.datasets.push({
+          type: 'line',
+          label: 'ユーザの総合モチベーション',
+          data: display.total_motivations,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+            color: '#FF0000',
+          },
+        });
+        options.scales['wave_line'] = {
+          position: 'right',
+          min: -1.1,
+          max: 1.1,
+        }
+      }else if(data_i == "motiv_need_to_getStart"){
+        data.datasets.push({
+          type: 'line',
+          label: 'タスクを開始するのに必要な総合モチベーション',
+          data: display.motiv_need_to_getStart,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+            color: '#FF0000',
+          },
+        });
+        options.scales['wave_line'] = {
+          position: 'right',
+          min: -1.1,
+          max: 1.1,
+        }
+      }else if(data_i == "motiv_need_to_getItDone"){
+        data.datasets.push({
+          type: 'line',
+          label: 'タスクを終了するのに必要な総合モチベーション',
+          data: display.motiv_need_to_getItDone,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+            color: '#FF0000',
+          },
+        });
+        options.scales['wave_line'] = {
+          position: 'right',
+          min: -1.1,
+          max: 1.1,
+        }
+      }else if(data_i == "data_UserWave"){
+        data.datasets.push({
+          type: 'line',
+          label: 'ユーザの波',
+          lineTension: 0.3,
+          data: display.usersWaves,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+            color: "#FF0000",
+          }
+        });
+        options.scales['wave_line'] = {
+          position: 'right',
+          min: -1.1,
+          max: 1.1,
+        }
+      }else if(data_i == "data_WorkWave"){
+        data.datasets.push({
+          type:'line',
+          label: 'ワークの波',
+          lineTension: 0.3,
+          data: display.worksWaves,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+            color: "#FF0000",
+          }
+        });
+        options.scales['wave_line'] = {
+          position: 'right',
+          min: -1.1,
+          max: 1.1,
+        }
+      }else if(data_i == "data_task_bar"){
+        data.datasets.push(
+          {
+            type: 'bar',
+            label: '設定したタスク',
+            data: display.tasks,
+            yAxisID: 'task_bar',
+            datalabels:{
+              display: false
+            },
+          },
+          {
+            type: 'bar',
+            label: '開始できたタスク',
+            data: display.started_tasks,
+            yAxisID: 'task_bar',
+            datalabels:{
+              display: false
+            },
+          },
+          {
+            type: 'bar',
+            label: '終了できたタスク',
+            data: display.finished_tasks,
+            yAxisID: 'task_bar',
+            datalabels:{
+              display: false
+            },
+          },
+          {
+            type: 'bar',
+            label: '成功したタスク',
+            data: display.successful_tasks,
+            yAxisID: 'task_bar',
+            datalabels:{
+              display: false
+            },
+          },
+        );
+        options.scales.task_bar = {
           // 小数点を隠す
           ticks:{
             precision: 0,
