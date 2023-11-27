@@ -20,7 +20,7 @@ services:
             - DEBUG=app:*
             # nodemonがファイル変更を検知するために必要
             - CHOKIDAR_USEPOLLING=1
-            # この2行で日時を設定
+            # 日時を設定
             - LD_PRELOAD=/usr/local/lib/faketime/libfaketimeMT.so.1
         networks:
             - good-habits-network
