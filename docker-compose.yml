@@ -15,9 +15,27 @@ services:
             - DEBUG=app:*
             # nodemonがファイル変更を検知するために必要
             - CHOKIDAR_USEPOLLING=1
-            # この2行で日時を設定
+            # 日時を設定
             - LD_PRELOAD=/usr/local/lib/faketime/libfaketimeMT.so.1
-
+        networks:
+            - good-habits-network
         command: /bin/bash -c "npm run start-dev"
+    pyapp:
+        build:
+            context: "./pyApp"
+            dockerfile: "./Dockerfile"
+        container_name: recommend-container
+        hostname: recommend-server
+        volumes:
+            - ./pyApp/app:/app
+        ports:
+            - "8888:80"
+        tty: true
+        networks:
+            - good-habits-network
 volumes:
     exclude_node_modules:
+networks:
+    good-habits-network:
+        name: good-habits-network
+        driver: bridge
