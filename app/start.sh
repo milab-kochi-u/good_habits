@@ -11,6 +11,11 @@ help(){
 
 	ヘルプ）こんにちは
 		本スクリプトは三好研究室の「習慣化支援システム」のシミュレーションプログラムです．
+	本コマンドにより
+	・ダミーデータの生成(default: 実施しない)
+	・express(DB)にダミーデータの読込(default: 実施しない)
+	・シミュレーションの実施(default: 実施する)
+	が実行できます．
 	使い方：
 	-h or --help：
 	    当プログラムの説明を表示します．
@@ -18,12 +23,13 @@ help(){
 	    日付形式を指定し，その日付からシミュレーションを開始します．
 	-D or --Day [integer]:
 	    シミュレーションの期間を設定します．
+	-u or --users [integer]:
+	    ダミーデータ生成時のユーザ数を指定します．
 	--no-sim:
 	    シミュレーションを実行しません．
 	--data-gen:
-	    プロファイルを再作成し，DBに読み込みます．
+	    ダミーデータを再作成します．
 	--read-db:
-	    ※ このオプションを使用した場合ダミーデータの生成とシミュレーションは実施されません．
 	    ./dummydata.json に記載の内容を./db-dev.sqlite3 にインポートします．
 	--backup [fileName]:
 	    ※ このオプションは他のオプションより優先して実行されます．
@@ -63,7 +69,7 @@ dateinit(){
 
 # ダミーデータの生成
 generate_dummydata(){
-	node generate_dummydata.js > dummydata.json
+	node generate_dummydata.js ${ARGS_GENERATEDATA} > dummydata.json
 }
 
 # ダミーデータを読み込む
@@ -98,6 +104,7 @@ replace_files(){
 SETDATE="2020-01-01"
 SETTIME="00:00:00"
 SETDAYS="10"
+ARGS_GENERATEDATA=""
 FLAG_GENERATEDATA="NO"
 FLAG_READDATA="NO"
 FLAG_SIMULATE="YES"
@@ -127,6 +134,17 @@ while [[ $# -gt 0 ]]; do
 					SETDAYS="$2" ; shift ; shift
 			esac
 			;;
+		-u|--users)
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					if [[ ! "$2" =~ (^[1-9][0-9]*) ]] || [[ "${BASH_REMATCH[0]}" != "$2" ]]; then echo "[ERROR] $1 parameter must be in non zero interger." ; exit 1 ; fi
+					ARGS_GENERATEDATA+="-u $2 " ; shift ; shift
+			esac
+			;;
 		--backup)
 			case $2 in
 				-*)
@@ -153,11 +171,10 @@ while [[ $# -gt 0 ]]; do
 			FLAG_SIMULATE="NO" ; shift
 			;;
 		--data-gen)
-			FLAG_GENERATEDATA="YES"
-			FLAG_READDATA="YES" ; shift
+			FLAG_GENERATEDATA="YES" ; shift
 			;;
 		--read-db)
-			read_dummydata ; exit 0
+			FLAG_READDATA="YES" ; shift
 			;;
 		--help)
 			help ; shift

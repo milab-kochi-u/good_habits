@@ -1,5 +1,19 @@
 // 初期値
 const mathlib = require('./mathlib.js');
+const yargs = require('yargs');
+
+const argv = yargs
+    .option('users', {
+        alias: 'u',
+        default: 20,
+        type: 'number',
+    })
+    .check(args => {
+        if(args._.length != 0) throw new Error('不明な引数が指定されています');
+        if(args.users === parseInt(args.users) && 1 <= args.users && args.users <= 500) return true;
+        else throw new Error('usersは1以上500以下の値を指定してください');
+    }).parseSync();
+
 const rangeOfInitialMotivation = [30, 80];	// 動機の高さ (0〜1) の初期値の範囲（×100）（30 → 実際は 0.3）
 const rangeOfThresholdOfWorkChanging = [0, 5];	// ワークを変更する閾値の範囲（×100）（30 → 実際は 0.3）
 // const rangeOfThresholdOfSchemeChanging = [0, 20];	// 工夫を変更する閾値の範囲（×100）（30 → 実際は 0.3）
@@ -9,7 +23,7 @@ const rangeOfCycleDays = [-10,10];	// 波長の周期の日数の範囲
 // TODO:乱数の出力は整数であり，日数単位として扱っているので，今後時間単位の乱数として扱いたい
 
 const numberOfCategories = 3;	// 1 にする場合は possibilityOfMultiCategory は 0 にすること
-const numberOfUsers = 20;
+const numberOfUsers = argv.users; // default: 20
 const numberOfWorks = 1;
 const numberOfSchemes = 100;
 const possibilityOfMultiCategory = 0.3;	// 複数のカテゴリにまたがる可能性
