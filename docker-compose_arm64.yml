@@ -31,7 +31,7 @@ services:
         container_name: recommend-container
         hostname: recommend-server
         volumes:
-            - ./pyApp/app:/code/app
+            - ./pyApp/app:/app
         ports:
           - "8888:80"
         tty: true
