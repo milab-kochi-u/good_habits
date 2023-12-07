@@ -1,8 +1,14 @@
+import os
+import sys
 from pydantic import BaseModel
 from fastapi import FastAPI, File, UploadFile
-from recommended_model import cf_mem_user
+from fastapi.responses import JSONResponse
+sys.path.append(os.pardir)
+from util import datamanage 
+from recommend import recommend
 
 app = FastAPI()
+datamanage.init()
 
 @app.get("/")
 def read_root():
@@ -16,7 +22,7 @@ async def create_upload_file(input_file: UploadFile):
         "content_type" : input_file.content_type,
     }
 
-@app.post("/exec_cf_mem_user/users/{user_id}/works/{work_id}")
-async def exec_cf_mem_user(input_file: UploadFile, user_id: int, work_id: int):
-    await cf_mem_user.main(input_file, user_id, work_id)
-    return {"ok"}
+@app.post("/recommend/users/{user_id}/works/{work_id}")
+async def exec_recommendation(input_file: UploadFile, user_id: int, work_id: int, model: str = "cf_mem_user"):
+    result = await recommend(input_file, user_id, work_id, model)
+    return JSONResponse(content=result)
