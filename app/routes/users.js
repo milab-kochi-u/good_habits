@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 var models = require('../models/index.js');
-var func = require('../op_tools/functions.js');
 const dayjs = require('dayjs');
 const work = require('../models/work.js');
 

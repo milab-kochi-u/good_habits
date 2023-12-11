@@ -26,20 +26,22 @@ async function changeMotivation(user, {
     motiv_need_to_getItDone: userMotivation.motiv_need_to_getItDone,
   }
   console.log('     ', user.name, 'さんのモチベーションが変更になります．');
-  console.log('     ', '変更前', new_obj);
   if(typeof motiv_increase_val !== 'undefined'){
     new_obj.motivation = mathlib.adjust(mathlib.round(new_obj.motivation + motiv_increase_val));
+    console.log('     ', `motivation: ${userMotivation.motivation} -> ${new_obj.motivation}`);
   }
   if(typeof totalMotivation !== 'undefined'){
     new_obj.totalMotivation = totalMotivation;
+    console.log('     ', `totalMotivation: ${userMotivation.totalMotivation} -> ${new_obj.totalMotivation}`);
   }
   if(typeof motiv_need_to_getStart !== 'undefined'){
     new_obj.motiv_need_to_getStart = motiv_need_to_getStart;
+    console.log('     ', `motiv_need_to_getStart: ${userMotivation.motiv_need_to_getStart} -> ${new_obj.motiv_need_to_getStart}`);
   }
   if(typeof motiv_need_to_getItDone !== 'undefined'){
     new_obj.motiv_need_to_getItDone = motiv_need_to_getItDone;
+    console.log('     ', `motiv_need_to_getItDone: ${userMotivation.motiv_need_to_getItDone} -> ${new_obj.motiv_need_to_getItDone}`);
   }
-  console.log('     ', '変更後', new_obj);
   const res = await user.createUsersMotivation(new_obj);
 }
 
@@ -105,6 +107,9 @@ async function resultsOfTask(user, work, date, dayCount) {
       type: 'number',
       default: 365,
     })
+    .option('doRecommend',{
+      type: 'boolean',
+    })
     .version().alias('v', 'version')
     .help().alias('h', 'help')
     .example(`$0 --init 2020-01-01 --days 500`)
@@ -119,6 +124,7 @@ async function resultsOfTask(user, work, date, dayCount) {
       if (args.days === parseInt(args.days) && args.days > 0) return true;
       else throw new Error('日数の指定が正しくありません');
     }).parseSync();
+    console.log(argv);
     await models.sequelize.sync();
     let simulationStartDate = undefined;
     let date = undefined;
