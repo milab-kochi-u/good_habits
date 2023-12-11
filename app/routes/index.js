@@ -17,9 +17,6 @@ router.get('/', async function(req, res, next) {
       user: "/users"
     },
     logs: sim_log,
-    func:{
-      ddate: func.ddate
-    },
   });
 });
 

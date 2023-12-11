@@ -81,9 +81,6 @@ router.get('/:id', async function(req, res, next){
       logs: sim_log,
       graph_data: graph_data,
     },
-    func:{
-      ddate: func.ddate
-    },
   });
 });
 
