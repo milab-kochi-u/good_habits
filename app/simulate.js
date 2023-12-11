@@ -297,8 +297,8 @@ async function resultsOfTask(user, work, date, dayCount) {
                   console.log('        ', user.name, 'さんは工夫を変更しませんでした．');
                 }
               }else{
-                console.log('        ', user.name, 'さんは工夫を「', selectedScheme.label, '」に変更しました．');
                 selectedScheme = getGoodWorS(user,schemes,passedDays);
+                console.log('        ', user.name, 'さんは工夫を「', selectedScheme.label, '」に変更しました．');
               }
               if(typeof selectedScheme !== 'undefined'){
                 await user.changeScheme({work:addedWork,scheme:selectedScheme});
