@@ -11,8 +11,8 @@ async def recommend(finput, user_id, work_id, model):
         with open(tmpfile, 'w+b') as fp:
             msg = await temp_file.read()
             fp.write(msg)
-        return tmpfile
         fwrite(f"一次ファイル{tmpfile}を生成しました")
+        return tmpfile
 
     try:
         # logging

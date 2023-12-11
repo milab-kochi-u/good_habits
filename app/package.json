@@ -4,16 +4,16 @@
   "private": true,
   "scripts": {
     "start:prod": "node ./bin/www",
-    "start:dev" : "nodemon -e ejs,js,json ./bin/www",
+    "start:dev": "nodemon -e ejs,js,json ./bin/www",
     "start:sync": "browser-sync start --config bs-config.js",
     "css": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css",
     "css-dev": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css -w",
-
     "start": "npm-run-all --parallel start:prod css",
     "start-dev": "npm-run-all --parallel start:dev start:sync css-dev"
   },
   "dependencies": {
     "autoprefixer": "^10.4.13",
+    "axios": "^1.6.2",
     "body-parser": "^1.20.0",
     "child_process": "^1.0.2",
     "cookie-parser": "~1.4.4",
