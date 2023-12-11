@@ -69,6 +69,14 @@ function getGoodWorS(user,all_WorS,passedDays){
   }
   return selectedWorS;
 }
+async function getRecommendedScheme(user,work){
+  try{
+    const result = await recommend("db-dev.sqlite3", user.id, work.id);
+    return result;
+  }catch(e){
+    throw e;
+  }
+}
 
 // 期間内のタスク実施結果を返す
 // 返り値: {"taskCount": 7, "successStart": 5, "successFinish": 4}
@@ -92,11 +100,6 @@ async function resultsOfTask(user, work, date, dayCount) {
 }
 
 (async() => {
-  // try{
-  //   const recommend_result = await recommend(undefined,1, 1);
-  // }catch(error){
-  //   console.error(error);
-  // }
   yargs
     .option('init', {
       description: '過去のシミュレーション結果を削除し，指定の日付からのシミュレーションを行う'
@@ -124,7 +127,6 @@ async function resultsOfTask(user, work, date, dayCount) {
       if (args.days === parseInt(args.days) && args.days > 0) return true;
       else throw new Error('日数の指定が正しくありません');
     }).parseSync();
-    console.log(argv);
     await models.sequelize.sync();
     let simulationStartDate = undefined;
     let date = undefined;
@@ -281,9 +283,26 @@ async function resultsOfTask(user, work, date, dayCount) {
             console.log('実施率：', new Intl.NumberFormat('ja',{style: 'percent'}).format(efficacy_rate));
             if(!isNaN(efficacy_rate) && efficacy_rate < 0.5){
               // 工夫を選び直す
-              let selectedScheme = getGoodWorS(user,schemes,passedDays);
-              console.log('        ', user.name, 'さんは工夫を「', selectedScheme.label, '」に変更しました．');
-              await user.changeScheme({work:addedWork,scheme:selectedScheme});
+              let selectedScheme = undefined;
+              if('doRecommend' in argv){
+                let selectedSchemes = await getRecommendedScheme(user,addedWork);
+                if(selectedSchemes){
+                  selectedSchemes = Object.entries(selectedSchemes).map(([key,value]) => ({key,value}));
+                  selectedSchemes.sort((a,b) => b.value - a.value);
+                  selectedScheme = await models.Scheme.findOne({
+                    where: {label: selectedSchemes[0].key},
+                  });
+                  console.log('        ', user.name, 'さんは工夫を推薦された「', selectedScheme.label, '」に変更しました．');
+                }else{
+                  console.log('        ', user.name, 'さんは工夫を変更しませんでした．');
+                }
+              }else{
+                console.log('        ', user.name, 'さんは工夫を「', selectedScheme.label, '」に変更しました．');
+                selectedScheme = getGoodWorS(user,schemes,passedDays);
+              }
+              if(typeof selectedScheme !== 'undefined'){
+                await user.changeScheme({work:addedWork,scheme:selectedScheme});
+              }
             }
             for (let d = 0; d < user.intervalDaysForSelfReflection; d++) {
               // TODO: 予定を立てられるようにする
