@@ -22,6 +22,9 @@
         <option value="total_Motivation">総合モチベーション</option>
         <option value="motiv_need_to_getStart">タスク開始に必要なモチベーション</option>
         <option value="motiv_need_to_getItDone">タスク終了に必要なモチベーション</option>
+        <option value="bar1_efficacy_rate">実施率(週毎向け)</option>
+        <option value="bar7_efficacy_rate_ma">7本実施率移動平均</option>
+        <option value="bar14_efficacy_rate_ma">14本実施率移動平均</option>
       </select>
     </div>
     <!-- <div class="mx-3 inline-block"> -->
@@ -117,6 +120,8 @@
         motiv_need_to_getItDone: [],
         usersWaves: [],
         worksWaves: [],
+        bar7_efficacy_rate_ma: [],
+        bar14_efficacy_rate_ma: [],
       },
     weekly:
       {
@@ -131,6 +136,9 @@
         motiv_need_to_getItDone: [],
         usersWaves: [],
         worksWaves: [],
+        bar1_efficacy_rate: [],
+        bar7_efficacy_rate_ma: [],
+        bar14_efficacy_rate_ma: [],
       },
     monthly:
       {
@@ -145,15 +153,23 @@
         motiv_need_to_getItDone: [],
         usersWaves: [],
         worksWaves: [],
+        bar7_efficacy_rate_ma: [],
+        bar14_efficacy_rate_ma: [],
       },
   }
 
   let data_arr = <%- JSON.stringify(data.graph_data) %>;
+  // daily用に集計
   for(var i = 0; i < data_arr.length; i++){
+    // x軸ラベル
     show_data.daily.labels[i] = dayjs(data_arr[i].x).format('YYYY.MM.DD');
+    // 設定タスク数
     show_data.daily.tasks[i] = data_arr[i].task;
+    // 開始タスク数
     show_data.daily.started_tasks[i] = data_arr[i].started_task;
+    // 終了タスク数
     show_data.daily.finished_tasks[i] = data_arr[i].finished_task;
+    // resultが成功になっているタスク数
     show_data.daily.successful_tasks[i] = data_arr[i].successful_task;
     // motivationは1日に複数ある場合があるが、平均を1日の代表値として扱う
     let base_motiv_avg = 0, total_motiv_avg = 0, getStart_avg = 0, getItDone_avg = 0;
@@ -180,13 +196,36 @@
     total_motiv_avg = Math.round(total_motiv_avg / total_cnt * Math.pow(10,2)) / Math.pow(10,2);
     getStart_avg = Math.round(getStart_avg / getStart_cnt * Math.pow(10,2)) / Math.pow(10,2);
     getItDone_avg = Math.round(getItDone_avg / getItDone_cnt * Math.pow(10,2)) / Math.pow(10,2);
+    // 基礎モチベーション
     show_data.daily.base_motivations[i] = base_motiv_avg;
+    // 総合モチベーション
     show_data.daily.total_motivations[i] = total_motiv_avg;
+    // タスク開始に必要なモチベーション
     show_data.daily.motiv_need_to_getStart[i] = getStart_avg;
+    // タスク終了に必要なモチベーション
     show_data.daily.motiv_need_to_getItDone[i] = getItDone_avg;
-    console.log(data_arr[i]);
+    // ユーザの波
     show_data.daily.usersWaves[i] = data_arr[i].waves[0].value;
+    // ワークの波
     show_data.daily.worksWaves[i] = data_arr[i].worksWaves[0].value;
+
+    function getMAinArray(loop_index, n=7){
+      if(loop_index >= (n - 1)){
+        let task1week_total=0, finished_task1week_total=0;
+        for(j=loop_index; j >= loop_index-(n-1); j--){
+          // 設定したタスクを集計
+          task1week_total += show_data.daily.tasks[j];
+          // 終了できたタスクを集計
+          finished_task1week_total += show_data.daily.finished_tasks[j];
+        }
+         return Math.round(finished_task1week_total / task1week_total * Math.pow(10,2)) / Math.pow(10,2);
+      }else{
+        return null;
+      }
+    }
+    show_data.daily.bar7_efficacy_rate_ma[i] = getMAinArray(i,7);
+    show_data.daily.bar14_efficacy_rate_ma[i] = getMAinArray(i,14);
+    // 7本実施率移動平均
   }
 
   // 週ごとにまとめる(日曜～土曜分をひとまとめにする)
@@ -199,12 +238,13 @@
     // xラベルは"{base_day}-{day_period}"とする
     let weekly_task_index = show_data.weekly.labels.findIndex(elm => elm == base_day.format('YYYY.MM.DD') + "~" + day_period.format('YYYY.MM.DD'));
     if(weekly_task_index == -1){
-      show_data.weekly.labels[show_data.weekly.tasks.length] = base_day.format('YYYY.MM.DD') + "~" + day_period.format('YYYY.MM.DD');
-      show_data.weekly.tasks[show_data.weekly.tasks.length] = Number(show_data.daily.tasks[i]);
-      show_data.weekly.started_tasks[show_data.weekly.started_tasks.length] = Number(show_data.daily.started_tasks[i]);
-      show_data.weekly.finished_tasks[show_data.weekly.finished_tasks.length] = Number(show_data.daily.finished_tasks[i]);
-      show_data.weekly.successful_tasks[show_data.weekly.successful_tasks.length] = Number(show_data.daily.successful_tasks[i]);
-      show_data.weekly.base_motivations[show_data.weekly.base_motivations.length] = [Number(show_data.daily.base_motivations[i])];
+      const ind = show_data.weekly.tasks.length;
+      show_data.weekly.labels[ind] = base_day.format('YYYY.MM.DD') + "~" + day_period.format('YYYY.MM.DD');
+      show_data.weekly.tasks[ind] = Number(show_data.daily.tasks[i]);
+      show_data.weekly.started_tasks[ind] = Number(show_data.daily.started_tasks[i]);
+      show_data.weekly.finished_tasks[ind] = Number(show_data.daily.finished_tasks[i]);
+      show_data.weekly.successful_tasks[ind] = Number(show_data.daily.successful_tasks[i]);
+      show_data.weekly.base_motivations[ind] = [Number(show_data.daily.base_motivations[i])];
     }else{
       show_data.weekly.tasks[weekly_task_index] += Number(show_data.daily.tasks[i]);
       show_data.weekly.started_tasks[weekly_task_index] += Number(show_data.daily.started_tasks[i]);
@@ -216,6 +256,11 @@
   for(const [index,item] of show_data.weekly.base_motivations.entries()){
     let sum = item.reduce((prev, elm) => prev + elm);
     show_data.weekly.base_motivations[index] = Math.round(sum / item.length * Math.pow(10,2)) / Math.pow(10,2);
+  }
+  for(i=0; i < show_data.weekly.labels.length; i++){
+    const task1bar_total = show_data.weekly.tasks[i];
+    const finished_task1bar_total = show_data.weekly.finished_tasks[i];
+    show_data.weekly.bar1_efficacy_rate[i] = Math.round(finished_task1bar_total / task1bar_total * Math.pow(10,2)) / Math.pow(10,2); 
   }
   
   function selectClear(){
@@ -516,6 +561,39 @@
           suggestedMax: 3,
           position: 'left',
         }
+      }else if(data_i == "bar7_efficacy_rate_ma"){
+        data.datasets.push({
+          type:'line',
+          label: '7本実施率移動平均',
+          lineTension: 0.3,
+          data: display.bar7_efficacy_rate_ma,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+          }
+        });
+      }else if(data_i == "bar14_efficacy_rate_ma"){
+        data.datasets.push({
+          type:'line',
+          label: '14本実施率移動平均',
+          lineTension: 0.3,
+          data: display.bar14_efficacy_rate_ma,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+          }
+        });
+      }else if(data_i == "bar1_efficacy_rate"){
+        data.datasets.push({
+          type:'line',
+          label: '実施率',
+          lineTension: 0.3,
+          data: display.bar1_efficacy_rate,
+          yAxisID: 'wave_line',
+          datalabels:{
+            align: 'top',
+          }
+        });
       }
     }
     draw(data, options);
