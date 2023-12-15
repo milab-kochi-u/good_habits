@@ -16,6 +16,7 @@ help(){
 	・express(DB)にダミーデータの読込(default: 実施しない)
 	・シミュレーションの実施(default: 実施する)
 	が実行できます．
+	オプション省略時のコマンド引数: start.sh -i 2020-01-01 -D 10
 	使い方：
 	-h or --help：
 	    当プログラムの説明を表示します．
@@ -27,10 +28,15 @@ help(){
 	    ダミーデータ生成時のユーザ数を指定します．
 	--no-sim:
 	    シミュレーションを実行しません．
+	--no-init:
+	    シミュレーション時にinitオプションを使用しません(前回のデータを継続します)
+	    '--reload-db'オプションを使わないでください．
+	--do-recommend:
+	    シミュレーション時に推薦を実施します
 	--data-gen:
 	    ダミーデータを再作成します．
-	--read-db:
-	    ./dummydata.json に記載の内容を./db-dev.sqlite3 にインポートします．
+	--reload-db:
+	    ./dummydata.json に記載の内容を./db-dev.sqlite3 に読み込みます．(DB既存データは削除されます)
 	--backup [fileName]:
 	    ※ このオプションは他のオプションより優先して実行されます．
 	    コマンド実行時点でのdummydata.jsonとdb-dev.sqlite3のコピーファイルを以下のように保存します．
@@ -79,8 +85,12 @@ read_dummydata(){
 
 # シミュレーションの実行
 exec_simulation(){
-	# -- 過去のシミュレーション結果を削除し，2020年1月1日から365日間のシミュレーションを行う
-	node simulate.js --init "${SETDATE}" -d "${SETDAYS}"
+	# -- 過去のシミュレーション結果を削除し，2020年1月1日から指定日間のシミュレーションを行う
+	if [ ${NO_INIT} = "YES" ];then
+		node simulate.js -d "${SETDAYS}" ${DO_RECOMMEND}
+	else
+		node simulate.js --init "${SETDATE}" -d "${SETDAYS}" ${DO_RECOMMEND}
+	fi
 }
 
 # バックアップファイルの生成
@@ -106,6 +116,8 @@ SETTIME="00:00:00"
 SETDAYS="10"
 ARGS_GENERATEDATA=""
 FLAG_GENERATEDATA="NO"
+NO_INIT="NO"
+DO_RECOMMEND=""
 FLAG_READDATA="NO"
 FLAG_SIMULATE="YES"
 while [[ $# -gt 0 ]]; do
@@ -170,10 +182,16 @@ while [[ $# -gt 0 ]]; do
 		--no-sim)
 			FLAG_SIMULATE="NO" ; shift
 			;;
+		--no-init)
+			NO_INIT="YES" ; shift
+			;;
+		--do-recommend)
+			DO_RECOMMEND="--doRecommend" ; shift
+			;;
 		--data-gen)
 			FLAG_GENERATEDATA="YES" ; shift
 			;;
-		--read-db)
+		--reload-db)
 			FLAG_READDATA="YES" ; shift
 			;;
 		--help)

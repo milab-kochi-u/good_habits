@@ -106,7 +106,6 @@ def recommend(matrix, user_id):
     # s_myself = myself.corr(method='pearson')
     # s_myself = s_myself.iat[0,1]
     # print(f"me: {s_myself}")
-
     for _id, u_k in others.items():
         u_ik = pd.concat([u_i, u_k], axis=1)
         s_ik = u_ik.corr(method='pearson')
@@ -122,6 +121,8 @@ def recommend(matrix, user_id):
     # 未採用の工夫に対して採用スコアを予測
     # 予測方法は平均による閾値処理（オリジナル）
     predict_values = pd.Series(name="Predicted effect of schemes")
+    if sim_set.shape[0] == 0:
+        return predict_values 
     for index in u_i[u_i == 0].index:
         # print(f"index:{index}")
         others_index_score = others[sim_set.index].loc[index]
@@ -145,6 +146,9 @@ def main(sqlite_path, user_id, work_id):
         fwrite(f"ユーザ×工夫行列を'{table_output}'に保存しました")
         # 推薦を実施
         res_ps = recommend(us_table.T, user_id)
+        if res_ps.shape[0] == 0:
+            fwrite(f"user id {user_id} におすすめできる工夫が存在しません．")
+            return None
         fwrite(f"user id {user_id} におすすめの工夫: {list(res_ps.to_dict().keys())[:10]}")
         return res_ps.to_dict()
 
