@@ -3,8 +3,16 @@
 <div class="m-4 p-7">
   <div class="w-auto inline-block">
     <ul class="[&>li]:p-2 [&>li]:border-b-4">
-      <li>前回のシミュレーション実行時刻: <b><%= func.ddate(logs.updatedAt) %></b></li>
-      <li>simulating date: <b><%= func.ddate(logs.startedAt) + " ～ " + func.ddate(logs.finishedAt) %></b></li>
+      <li>前回のシミュレーション実行時刻: <b id="last_simulation_run_time"></b></li>
+      <li>simulating date: <b id="simulating_date"></b></li>
+      <script>
+        const last_sim_d = document.getElementById('last_simulation_run_time');
+        const sim_duration = document.getElementById('simulating_date');
+        const datemsg = "<%= logs.updatedAt %>";
+        const dduration = ["<%= logs.startedAt %>", "<%= logs.finishedAt %>"];
+        last_sim_d.innerHTML = dayjs(datemsg).format('YYYY/MM/DD HH:mm:ss Z');
+        sim_duration.innerHTML = `${dayjs(dduration[0]).format('YYYY/MM/DD HH:mm:ss Z')}  ~ ${dayjs(dduration[1]).format('YYYY/MM/DD HH:mm:ss Z')}`;
+      </script>
     </ul>
   </div>
 

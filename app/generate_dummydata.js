@@ -1,18 +1,18 @@
 // 初期値
-const mathlib = require('./mathlib.js');
+const mathlib = require('./util/mathlib.js');
 const yargs = require('yargs');
 
 const argv = yargs
-    .option('users', {
-        alias: 'u',
-        default: 20,
-        type: 'number',
-    })
-    .check(args => {
-        if(args._.length != 0) throw new Error('不明な引数が指定されています');
-        if(args.users === parseInt(args.users) && 1 <= args.users && args.users <= 500) return true;
-        else throw new Error('usersは1以上500以下の値を指定してください');
-    }).parseSync();
+	.option('users', {
+		alias: 'u',
+		default: 20,
+		type: 'number',
+	})
+	.check(args => {
+		if(args._.length != 0) throw new Error('不明な引数が指定されています');
+		if(args.users === parseInt(args.users) && 1 <= args.users && args.users <= 500) return true;
+		else throw new Error('usersは1以上500以下の値を指定してください');
+	}).parseSync();
 
 const rangeOfInitialMotivation = [30, 80];	// 動機の高さ (0〜1) の初期値の範囲（×100）（30 → 実際は 0.3）
 const rangeOfThresholdOfWorkChanging = [0, 5];	// ワークを変更する閾値の範囲（×100）（30 → 実際は 0.3）
@@ -28,7 +28,7 @@ const numberOfWorks = 1;
 const numberOfSchemes = 100;
 const possibilityOfMultiCategory = 0.3;	// 複数のカテゴリにまたがる可能性
 const numberOfSignificantDigits = 2	// 有効桁数（乱数などの実数値の小数点以下の桁数が長くなりすぎるため）
-const numberOfDaysForExperiment = 365 * 0.5;	// 実験期間の日数
+// const numberOfDaysForExperiment = 365 * 0.5;	// 実験期間の日数
 const candidatesOfIntervalDaysForSelfReflection = [7, 14, 30];	// 振り返りを行う日数の候補
 
 // a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
@@ -130,7 +130,8 @@ for (let i = 0; i < numberOfUsers; i++) {
 	const waveLength = mathlib.getRandomInt(rangeOfCycleDays);
 	const initialPhase = i+1;
 	const priorityOfCategory = decidePriorityOfCategories();
-	const startDays = mathlib.getRandomInt([0, numberOfDaysForExperiment / 3]);
+	// const startDays = mathlib.getRandomInt([0, numberOfDaysForExperiment / 3]);
+	const startDays = mathlib.getRandomInt([0, 6]);
 	// const initialMotivation = mathlib.round(mathlib.getRandomInt(rangeOfInitialMotivation) / 100.0);
 	const initialMotivation = mathlib.round(mathlib.rnorm(0.2,0.5));
 	const intervalDaysForSelfReflection = candidatesOfIntervalDaysForSelfReflection[mathlib.getRandomInt([0, candidatesOfIntervalDaysForSelfReflection.length])];
