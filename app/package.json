@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start:prod": "node ./bin/www",
-    "start:dev": "nodemon -e ejs,js,json ./bin/www",
+    "start:dev": "nodemon -e env,ejs,js,json -w . -w .env ./bin/www",
     "start:sync": "browser-sync start --config bs-config.js",
     "css": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css",
     "css-dev": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css -w",
@@ -19,6 +19,7 @@
     "csv": "^6.2.0",
     "dayjs": "^1.11.3",
     "debug": "~2.6.9",
+    "dotenv": "^16.3.1",
     "ejs": "^3.1.8",
     "express": "^4.18.2",
     "express-session": "^1.17.3",
