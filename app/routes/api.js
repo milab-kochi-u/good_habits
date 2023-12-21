@@ -47,12 +47,12 @@ router.get('/getDBstate', function(req,res,next){
 router.post('/changeDB', function(req,res,next){
   models.sequelize.close();
   if(req.body.file != 'sqlite-default'){
-    fs.writeFile('.env', `SQLITE_PATH=/tmp/sqlites/${req.body.file}`, (err)=>{
+    fs.writeFile('/tmp/.env', `SQLITE_PATH=/tmp/sqlites/${req.body.file}`, (err)=>{
       if(err) throw err;
       console.log('ok!');
     });
   }else{
-    fs.writeFile('.env', ``, (err)=>{
+    fs.writeFile('/tmp/.env', ``, (err)=>{
       if(err) throw err;
       console.log('ok!');
     });

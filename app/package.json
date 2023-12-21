@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start:prod": "node ./bin/www",
-    "start:dev": "nodemon -e env,ejs,js,json -w . -w .env ./bin/www",
+    "start:dev": "nodemon -e env,ejs,js,json -w . -w /tmp/.env ./bin/www",
     "start:sync": "browser-sync start --config bs-config.js",
     "css": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css",
     "css-dev": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css -w",
