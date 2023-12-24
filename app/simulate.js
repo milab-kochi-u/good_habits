@@ -1,11 +1,8 @@
 const models = require('./models/index.js');
 const dayjs = require('dayjs');
 const yargs = require('yargs');
-const user = require('./models/user.js');
 const { Op } = require("sequelize");
 const mathlib = require('./util/mathlib.js');
-const schemesWave = require('./models/schemesWave.js');
-const worksWave = require('./models/worksWave.js');
 const { recommend } = require('./util/manageapi.js');
 
 // userのモチベーションを指定値だけ増減させる（負の数も可能）
@@ -226,14 +223,14 @@ async function resultsOfTask(user, work, date, dayCount) {
       for (let user of users) {
         if (user.startDays > day) continue;  // まだ利用を始めていない
         let addedWorks = await user.getWorks();
-        const SusersWaveValue = await user.getUsersWaves({
+        const usersWaveValue = await user.getUsersWaves({
           where:{
             date: {
               [Op.like]: `${date.format('YYYY-MM-DD')}%`,
             }
           }
         });
-        console.log(user.name, 'の本日の波：', SusersWaveValue[0].value);
+        console.log(user.name, 'の本日の波：', usersWaveValue[0].value);
 
         // ワークが未決定なら決定する
         if (addedWorks.length < 1) {
@@ -256,9 +253,15 @@ async function resultsOfTask(user, work, date, dayCount) {
           addedWorks = await user.getWorks();
         }
 
+        // 本日のモチベーションを決める
+        let todays_inc_val;
+        if(usersWaveValue[0].value > 0.95) todays_inc_val = 0.02;
+        else if(usersWaveValue[0].value < -0.95)todays_inc_val = -0.02;
+        else todays_inc_val = -0.01;
+
         await changeMotivation(user,{
-          motiv_increase_val: -0.01,
-        }); //やる気が0.01減る
+          motiv_increase_val: todays_inc_val,
+        }); 
           
         // 次の振り返り日を決める
         let nextSelfReflected = dayjs(date).subtract(1, 'day');
@@ -353,7 +356,7 @@ async function resultsOfTask(user, work, date, dayCount) {
 
             //総合モチベーション
             // const totalMotivation = mathlib.round(currentMotivation*0.5 +  checkChemistry(user,w,passedDays)*0.25 + checkChemistry(user, selectedScheme,passedDays)*0.25);
-            const totalMotivation = mathlib.round(currentMotivation * 0.5 +  checkChemistry(user, w, passedDays) * 0.5 + checkChemistry(user, selectedScheme, passedDays) * 0.2);
+            const totalMotivation = mathlib.round(currentMotivation * 0.6 +  checkChemistry(user, w, passedDays) * 0.25 + checkChemistry(user, selectedScheme, passedDays) * 0.15);
             //開始に必要なモチベーション
             const motiv_nedd_to_getStart = mathlib.round((1 - user.featureOfStart) - (selectedScheme.chemistry_featureOfStart - 0.5) * 0.2);
             //終了に必要なモチベーション

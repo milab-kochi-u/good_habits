@@ -38,8 +38,8 @@ help(){
 	--reload-db:
 	    ./dummydata.json に記載の内容を./db-dev.sqlite3 に読み込みます．(DB既存データは削除されます)
 	--backup [fileName]:
-	    ※ このオプションは他のオプションより優先して実行されます．
-	    コマンド実行時点でのdummydata.jsonとdb-dev.sqlite3のコピーファイルを以下のように保存します．
+	    ※ このオプションはダミーデータの生成やシミュレーションの後に実施されます.
+	    dummydata.jsonとdb-dev.sqlite3のコピーファイルを以下のパスに保存します．
 	    ./backups/fileName.json, ./backups/fileName.sqlite3
 	    拡張子は記述しないでください．
 	--replace [fileName]:
@@ -117,6 +117,7 @@ SETDAYS="10"
 ARGS_GENERATEDATA=""
 FLAG_GENERATEDATA="NO"
 NO_INIT="NO"
+BACKUP="NO"
 DO_RECOMMEND=""
 FLAG_READDATA="NO"
 FLAG_SIMULATE="YES"
@@ -164,7 +165,7 @@ while [[ $# -gt 0 ]]; do
 					;;
 				*) 
 					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
-					backup_files $2 ; shift ; shift
+					BACKUP=$2 ; shift ; shift
 			esac
 			;;
 		--replace)
@@ -234,5 +235,6 @@ export FAKETIME_NO_CACHE=1
 if [[ $FLAG_GENERATEDATA = "YES" ]]; then generate_dummydata ; fi
 if [[ $FLAG_READDATA = "YES" ]]; then read_dummydata ; fi
 if [[ $FLAG_SIMULATE = "YES" ]]; then exec_simulation ; fi
+if [[ $BACKUP != "NO" ]]; then backup_files $BACKUP; fi
 
 exit 0
