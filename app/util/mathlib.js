@@ -46,7 +46,7 @@ function rnorm(sigma=1,mu=0){
 		return z1 * sigma + mu;
 }	
 
-function adjust(num, min=0, max=1){
+function adjust(num, min=0.00, max=1.00){
 	if(num < min){
 		return min;
 	}else if(max < num){

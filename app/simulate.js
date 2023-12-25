@@ -1,100 +1,13 @@
-const models = require('./models/index.js');
+const fs = require('fs');
+if(fs.existsSync('/tmp/.env')){
+  fs.writeFileSync('/tmp/.env', '');
+}
 const dayjs = require('dayjs');
 const yargs = require('yargs');
 const { Op } = require("sequelize");
 const mathlib = require('./util/mathlib.js');
-const { recommend } = require('./util/manageapi.js');
-
-// userのモチベーションを指定値だけ増減させる（負の数も可能）
-async function changeMotivation(user, {
-  motiv_increase_val,
-  totalMotivation,
-  motiv_need_to_getStart,
-  motiv_need_to_getItDone
-} = {}){
-  const userMotivation = await models.UsersMotivation.findOne({
-    where: { UserId: user.id},
-    order: [ [ 'createdAt', 'DESC']],
-  });
-  const new_obj = {
-    motivation: userMotivation.motivation,
-    totalMotivation: userMotivation.totalMotivation,
-    motiv_need_to_getStart: userMotivation.motiv_need_to_getStart,
-    motiv_need_to_getItDone: userMotivation.motiv_need_to_getItDone,
-  }
-  console.log('     ', user.name, 'さんのモチベーションが変更になります．');
-  if(typeof motiv_increase_val !== 'undefined'){
-    new_obj.motivation = mathlib.adjust(mathlib.round(new_obj.motivation + motiv_increase_val));
-    console.log('     ', `motivation: ${userMotivation.motivation} -> ${new_obj.motivation}`);
-  }
-  if(typeof totalMotivation !== 'undefined'){
-    new_obj.totalMotivation = totalMotivation;
-    console.log('     ', `totalMotivation: ${userMotivation.totalMotivation} -> ${new_obj.totalMotivation}`);
-  }
-  if(typeof motiv_need_to_getStart !== 'undefined'){
-    new_obj.motiv_need_to_getStart = motiv_need_to_getStart;
-    console.log('     ', `motiv_need_to_getStart: ${userMotivation.motiv_need_to_getStart} -> ${new_obj.motiv_need_to_getStart}`);
-  }
-  if(typeof motiv_need_to_getItDone !== 'undefined'){
-    new_obj.motiv_need_to_getItDone = motiv_need_to_getItDone;
-    console.log('     ', `motiv_need_to_getItDone: ${userMotivation.motiv_need_to_getItDone} -> ${new_obj.motiv_need_to_getItDone}`);
-  }
-  const res = await user.createUsersMotivation(new_obj);
-}
-
-// a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
-// TODO: 現在は日毎に計算しているのみであるが，日毎の値もDBに登録しておきたい．
-function checkChemistry(a, b, day) {
-	const aPhase = Math.sin(2 * Math.PI / (24 - a['waveLength']) * (day - a['initialPhase']));
-	const bPhase = Math.sin(2 * Math.PI / (24 - b['waveLength']) * (day - b['initialPhase']));
-  // console.log((a.name ? a.name : a.label), ' aPhase=', aPhase);
-  // console.log((b.name ? b.name : b.label), ' bPhase=', bPhase);
-	return 1.0 - Math.abs(aPhase - bPhase) / 2;
-}
-
-// Userと相性の良いWork,Schemeを返す
-function getGoodWorS(user,all_WorS,passedDays){
-  // TODO: ワークを決める際にカテゴリの相性を考慮する
-  let maxChemistry = -1;
-  let selectedWorS = null;
-  for(let WorS of all_WorS){
-    const chemistry = mathlib.round(checkChemistry(user,WorS,passedDays));
-    if(chemistry > maxChemistry){
-      selectedWorS = WorS;
-      maxChemistry = chemistry;
-    }
-  }
-  return selectedWorS;
-}
-async function getRecommendedScheme(user,work){
-  try{
-    const result = await recommend("db-dev.sqlite3", user.id, work.id);
-    return result;
-  }catch(e){
-    throw e;
-  }
-}
-
-// 期間内のタスク実施結果を返す
-// 返り値: {"taskCount": 7, "successStart": 5, "successFinish": 4}
-async function resultsOfTask(user, work, date, dayCount) {
-  let startTime = dayjs(date).subtract(dayCount, 'day');
-  const wh = {
-    [Op.and]: [
-      { start_time: { [Op.gte]: startTime.toDate() } },
-      { end_time: { [Op.lt]: date.toDate() } }
-    ]
-  };
-  let tasks = await user.getTasks(work, wh);
-  // console.log(startTime.format('YYYY-MM-DD'), date.format('YYYY-MM-DD'), user.name, work.label, tasks);
-  // WARN: 現在はresultの値はタスクを開始した時点で1にしているのであまり当てにしない
-  return {
-    'taskCount': tasks.length,
-    // 'successStart': tasks.filter(task => task.started_at != null).length,  // start_at が null じゃない回数
-    'successFinish': tasks.filter(task => task.finished_at != null).length, // finish_at が null じゃない回数
-    'successResult': tasks.filter(task => task.result == true).length, // result = True の回数
-  }
-}
+const models = require('./models/index.js');
+const sim = require('./util/simfunc.js');
 
 (async() => {
   yargs
@@ -223,13 +136,15 @@ async function resultsOfTask(user, work, date, dayCount) {
       for (let user of users) {
         if (user.startDays > day) continue;  // まだ利用を始めていない
         let addedWorks = await user.getWorks();
-        const usersWaveValue = await user.getUsersWaves({
-          where:{
-            date: {
-              [Op.like]: `${date.format('YYYY-MM-DD')}%`,
-            }
-          }
-        });
+        // const usersWaveValue = await user.getUsersWaves({
+        //   where:{
+        //     date: {
+        //       [Op.lte]: date,
+        //       [Op.gte]: date,
+        //     }
+        //   }
+        // });
+        const usersWaveValue = await sim.getRecentUsersWave(user);
         console.log(user.name, 'の本日の波：', usersWaveValue[0].value);
 
         // ワークが未決定なら決定する
@@ -242,24 +157,28 @@ async function resultsOfTask(user, work, date, dayCount) {
               motivation: user.initialMotivation,
             });
           }
-          let selectedWork = getGoodWorS(user,works,passedDays);
+          let selectedWork = sim.getGoodWorS(user,works,passedDays);
           console.log('       ', user.name, 'は', selectedWork.label, 'を継続させたいワークに設定します');
           await user.addWork(selectedWork);
 
           // 工夫を決める
-          let selectedScheme = getGoodWorS(user,schemes,passedDays);
+          let selectedScheme = sim.getGoodWorS(user,schemes,passedDays);
           console.log('       ', user.name, 'は工夫「',selectedScheme.label,'」を採用します．');
           await user.addScheme({work: selectedWork, scheme: selectedScheme});
           addedWorks = await user.getWorks();
         }
 
         // 本日のモチベーションを決める
-        let todays_inc_val;
-        if(usersWaveValue[0].value > 0.95) todays_inc_val = 0.02;
-        else if(usersWaveValue[0].value < -0.95)todays_inc_val = -0.02;
-        else todays_inc_val = -0.01;
+        let todays_inc_val = 0;
+        const todays_users_motivation = await sim.getMotivation(user);
+        todays_inc_val += mathlib.round(((user.featureOfStart + user.featureOfComplete) - 1) / 25);
+        if(usersWaveValue[0].value > 0.95) todays_inc_val += 0.02;
+        else if(usersWaveValue[0].value < -0.92)todays_inc_val += -0.03;
+        else todays_inc_val += -0.02;
+        if(todays_users_motivation >= 1) todays_inc_val += -0.05;
+        else if(todays_users_motivation <= 0) todays_inc_val += 0.03;
 
-        await changeMotivation(user,{
+        await sim.changeMotivation(user,{
           motiv_increase_val: todays_inc_val,
         }); 
           
@@ -280,7 +199,7 @@ async function resultsOfTask(user, work, date, dayCount) {
           // TODO: 時間もまばらにする（全部19:00になってる）
           for (addedWork of addedWorks) {
             // TODO: 今までの履歴も振り返る
-            const history = await resultsOfTask(user,addedWork, date, 7);
+            const history = await sim.resultsOfTask(user,addedWork, date, 7);
             console.log('        ', user.name, 'さんの予定実施結果:', history);
             const efficacy_rate = history['successFinish'] / history['taskCount'];
             console.log('実施率：', new Intl.NumberFormat('ja',{style: 'percent'}).format(efficacy_rate));
@@ -288,7 +207,7 @@ async function resultsOfTask(user, work, date, dayCount) {
               // 工夫を選び直す
               let selectedScheme = undefined;
               if('doRecommend' in argv){
-                let selectedSchemes = await getRecommendedScheme(user,addedWork);
+                let selectedSchemes = await sim.getRecommendedScheme(user,addedWork);
                 if(selectedSchemes){
                   selectedSchemes = Object.entries(selectedSchemes).map(([key,value]) => ({key,value}));
                   selectedSchemes.sort((a,b) => b.value - a.value);
@@ -300,7 +219,7 @@ async function resultsOfTask(user, work, date, dayCount) {
                   console.log('        ', user.name, 'さんは工夫を変更しませんでした．');
                 }
               }else{
-                selectedScheme = getGoodWorS(user,schemes,passedDays);
+                selectedScheme = sim.getGoodWorS(user,schemes,passedDays);
                 console.log('        ', user.name, 'さんは工夫を「', selectedScheme.label, '」に変更しました．');
               }
               if(typeof selectedScheme !== 'undefined'){
@@ -309,7 +228,7 @@ async function resultsOfTask(user, work, date, dayCount) {
             }
             for (let d = 0; d < user.intervalDaysForSelfReflection; d++) {
               // TODO: 予定を立てられるようにする
-              const chemistry = mathlib.round(checkChemistry(user, addedWork, passedDays));
+              const chemistry = mathlib.round(sim.checkChemistry(user, addedWork, passedDays));
               if (chemistry < 0.1) continue;  // (仮) 0.1未満なら予定を立てない
               const task = await user.createTask({
                 work: addedWork,
@@ -355,26 +274,27 @@ async function resultsOfTask(user, work, date, dayCount) {
             })).motivation;
 
             //総合モチベーション
-            // const totalMotivation = mathlib.round(currentMotivation*0.5 +  checkChemistry(user,w,passedDays)*0.25 + checkChemistry(user, selectedScheme,passedDays)*0.25);
-            const totalMotivation = mathlib.round(currentMotivation * 0.6 +  checkChemistry(user, w, passedDays) * 0.25 + checkChemistry(user, selectedScheme, passedDays) * 0.15);
+            const totalMotivation = mathlib.round(currentMotivation * 0.6 +  sim.checkChemistry(user, w, passedDays) * 0.25 + sim.checkChemistry(user, selectedScheme, passedDays) * 0.15);
             //開始に必要なモチベーション
-            const motiv_nedd_to_getStart = mathlib.round((1 - user.featureOfStart) - (selectedScheme.chemistry_featureOfStart - 0.5) * 0.2);
+            const motiv_nedd_to_getStart = mathlib.round((1.05 - user.featureOfStart) - ((selectedScheme.chemistry_featureOfStart - 0.5) * 0.3));
             //終了に必要なモチベーション
-            const motiv_need_to_getItDone = mathlib.round((1 - user.featureOfComplete) - (selectedScheme.chemistry_featureOfComplete - 0.5) * 0.2);
+            const motiv_need_to_getItDone = mathlib.round((1.05 - user.featureOfComplete) - ((selectedScheme.chemistry_featureOfComplete - 0.5) * 0.3));
             console.log('           ',user.name, 'さんの本日の総合モチベーション：', totalMotivation, '    開始に必要な総合モチベーション:', motiv_nedd_to_getStart);
             // DBに登録
-            await changeMotivation(user, {
+            await sim.changeMotivation(user, {
               totalMotivation: totalMotivation,
               motiv_need_to_getStart: motiv_nedd_to_getStart,
               motiv_need_to_getItDone: motiv_need_to_getItDone,
             });
-
+            // モチベーションの上昇量
+            let motiv_increase_val = 0;
             // やる気に対して，必要とされるやる気の閾値は”とりかかりの特性値”で決める
             if (totalMotivation <= motiv_nedd_to_getStart){ // ワークの難易度によって閾値が増減する
             // if (totalMotivation < mathlib.round(1 - user.featureOfStart + ワークの難易度)){
               console.log('           ', '本日はサボりました...');
             }else{
               //　とりかかり成功
+              motiv_increase_val += 0.01;
               // task.open(task.start_time);
               task.open(dayjs());
               console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + dayjs().format('YYYY/MM/DD HH:mm:ss') + 'に開始しました．');
@@ -386,13 +306,14 @@ async function resultsOfTask(user, work, date, dayCount) {
                 task.close(dayjs());
                 // console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + (process.env['FAKETIME']).split("@")[1] + 'に終了しました．');
                 console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + dayjs().format('YYYY/MM/DD HH:mm:ss') + 'に終了しました．');
-                await changeMotivation(user, {
-                  motiv_increase_val: 0.01,
-                }); // やる気が0.01上がる
-
+                motiv_increase_val += 0.01;
               }else{
                 console.log('           ', 'やりきりませんでした...');
               }
+              // モチベーションを更新する
+              await sim.changeMotivation(user, {
+                motiv_increase_val: motiv_increase_val,
+              }); 
             }
           }
         }
@@ -413,7 +334,7 @@ async function resultsOfTask(user, work, date, dayCount) {
       const myWs = await user.getWorks();
       for(let work of myWs){
         console.log('WorkLabel:', work.label);
-        console.log('result('+argv.days+'days)\n', await resultsOfTask(user, work, date, argv.days));
+        console.log('result('+argv.days+'days)\n', await sim.resultsOfTask(user, work, date, argv.days));
       }
     }
     console.log('--------------------------------------------');
