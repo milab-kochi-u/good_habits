@@ -57,10 +57,8 @@ module.exports = (sequelize, DataTypes) => {
     if(myUW.length != 1) return null;
     // 前のschemeを削除
     (await myUW[0].getUsersSchemes()).forEach(async US => {
-      console.log('deleting UsersScheme.id:', US.id)
       await US.destroy();
     });
-    console.log('adding scheme.label:', scheme.label, 'scheme.id', scheme.id);
     await myUW[0].addScheme(scheme);
   }
 

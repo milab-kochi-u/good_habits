@@ -19,6 +19,18 @@ def create_US_table(filename, work_id):
     conn = sqlite3.connect(dbname)
     cur = conn.cursor()
 
+    def record_timestamp():
+        data = pd.read_sql(
+            f"""
+                SELECT createdAt, updatedAt
+                FROM SimulationLogs
+                ORDER BY updatedAt DESC
+                LIMIT 1
+            """,conn)
+        fwrite(f"DB createdAt: {data.iloc[-1,0]}, DB updatedAt: {data.iloc[-1,1]}")
+        
+    record_timestamp()
+
     # 各ユーザごとに処理をループ
     # Users df (without duplicates)
     Users = pd.read_sql(
@@ -141,9 +153,9 @@ def main(sqlite_path, user_id, work_id):
         # ユーザ×工夫の行列を取得
         us_table = create_US_table(sqlite_path, work_id)
         # 行列をcsvとして保存
-        table_output = "/app/log/user_scheme_matrix.csv"
-        us_table.to_csv(table_output)
-        fwrite(f"ユーザ×工夫行列を'{table_output}'に保存しました")
+        csv_string = us_table.to_csv()
+        fwrite(csv_string,stdout=False,add_date=True,header="csv",end="\n\n");
+        fwrite(f"ユーザ×工夫行列を保存しました")
         # 推薦を実施
         res_ps = recommend(us_table.T, user_id)
         if res_ps.shape[0] == 0:

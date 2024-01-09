@@ -26,7 +26,7 @@ async def recommend(finput, user_id, work_id, model):
         os.remove(fp)
         fwrite(f"一時ファイル{fp}を削除しました")
         fwrite(f"推薦結果を返します")
-        fwrite(f"{'-' * 200}", add_date=False)
+        fwrite(f"{'-' * 200}")
         return result
 
     except Exception as e:

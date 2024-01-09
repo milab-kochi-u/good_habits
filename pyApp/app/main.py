@@ -26,3 +26,11 @@ async def create_upload_file(input_file: UploadFile):
 async def exec_recommendation(input_file: UploadFile, user_id: int, work_id: int, model: str = "cf_mem_user"):
     result = await recommend(input_file, user_id, work_id, model)
     return JSONResponse(content=result)
+
+@app.get("/getLog/users/{user_id}/works/{work_id}")
+async def get_log(user_id: int, work_id: int):
+    data = datamanage.get_log(user_id,work_id)
+    if(data != 0):
+        return {"result": data}
+    else:
+        return {"result": "muri"}

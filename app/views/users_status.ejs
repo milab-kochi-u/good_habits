@@ -102,6 +102,24 @@
     </div>
     <!-- 周期関数のグラフを表示 -->
   </div>
+  <div id="logfile-container" class="m-1 p-1 mt-3 flex flex-wrap justify-center">
+    <div class="w-full text-lg mb-3">
+      <p class="inline-block mr-3">ログファイル(注意：Default DBのログ)</p>
+      <input class="border border-black	mr-3" type="text" id="search_text" placeholder="キーワードで検索">
+      <p class="inline-block"></p>
+    </div>
+    <div class="overflow-scroll h-[800px] w-[1000px] border border-black p-1">
+    </div>
+  </div>
+  <div id="rec-logfile-container" class="m-1 p-1 mt-3 flex flex-wrap justify-center">
+    <div class="w-full text-lg mb-3">
+      <p class="inline-block mr-3">推薦ログファイル</p>
+      <!-- <input class="border border-black	mr-3" type="text" id="rec_search_text" placeholder="キーワードで検索"> -->
+      <p class="inline-block"></p>
+    </div>
+    <div class="overflow-scroll h-[800px] w-[1500px] border border-black p-1">
+    </div>
+  </div>
 </div>
 
 <!-- script -->
@@ -618,6 +636,212 @@
     }
   }
   drawChart('daily');
+</script>
+
+<!-- ログ共通処理script -->
+<script>
+  async function waitQuerySelector(selector, node=document, all=false){
+    let obj=null;
+    for(let i=1;i<20&&!obj;i++){
+      if(all){
+        obj=await new Promise(resolve=>setTimeout(()=>resolve(node.querySelectorAll(selector), 100)));
+      }else{
+        obj=await new Promise(resolve=>setTimeout(()=>resolve(node.querySelector(selector), 100)));
+      }
+    }
+    return obj;
+  }
+</script>
+
+<!-- dbログファイル用script -->
+<script>
+  let p_list, details_list;
+
+  async function insertLog(){
+    const insert_elm = document.querySelector("#logfile-container div:nth-child(2)");
+    const sqlite_default_radio = await waitQuerySelector("#sqlite-default");
+    await new Promise((resolve)=>{setTimeout(()=>{resolve();}, 1000)});
+    if(sqlite_default_radio.checked){
+      const log = (await axios.get('/api/getLogFile/user/<%= data.user.id %>')).data;
+      let insert_html = "";
+      let accordion_cnt = 0;
+      for(let row of log){
+        if(row.split(":")[2].indexOf('  シミュレーション開始から') === 0){
+          if(accordion_cnt != 0){
+            insert_html = insert_html + `
+              </details>
+            `;
+          }
+          accordion_cnt += 1;
+          insert_html = insert_html + `
+            <details class="my-1">
+              <summary class="hover:cursor-pointer	hover:bg-sky-500/[.2]">${row}</summary>
+          `;
+        }else if(accordion_cnt == 0){
+          insert_html = insert_html + `<p class="text-gray-600 mb-1">${row}</p>`;
+        }else{
+          insert_html = insert_html + `
+            <p class="text-gray-600 mb-1">${row}</p>
+          `;
+        }
+      }
+      insert_elm.insertAdjacentHTML("beforeend", insert_html);
+      p_list = await waitQuerySelector("#logfile-container > div:nth-child(2) > p", document, true);
+      details_list = await waitQuerySelector("#logfile-container > div:nth-child(2) > details", document, true);
+    }else{
+      document.getElementById("logfile-container").className = "hidden";
+    }
+  }
+
+  // リアルタイム検索
+  const s_text = document.getElementById("search_text");
+  const result = document.querySelector("#logfile-container > div:first-child > p:nth-of-type(2)");
+  function search_text(){
+    let result_num = 0;
+    const keyword = s_text.value;
+    style = ['<span class="bg-yellow-500/[.6] font-bold">', '</span>'];
+    style2 = ['<span class="bg-red-500/[.4] font-bold">', '</span>'];
+    p_list.forEach(val => {
+      val.className = val.className.split(" hidden ").join("");
+      val.innerHTML = val.innerHTML.split(style[0]).join("").split(style[1]).join("");
+      if(keyword != "" && val.innerHTML.indexOf(keyword) == -1) val.className = val.className + " hidden ";
+      else if(keyword != ""){
+        val.innerHTML = val.innerHTML.split(keyword).join(`${style[0]}${keyword}${style[1]}`);
+        result_num += 1;
+      }
+    });
+    details_list.forEach(val => {
+      let summary = val.querySelector("summary");
+      val.className = val.className.split(" hidden ").join("");
+      summary.innerHTML = summary.innerHTML.split(style[0]).join("").split(style[1]).join("");
+      val.open = false;
+      if(keyword != "" && summary.innerHTML.indexOf(keyword) == -1) val.className = val.className + " hidden ";
+      else if(keyword != ""){
+        summary.innerHTML = summary.innerHTML.split(keyword).join(`${style[0]}${keyword}${style[1]}`);
+        result_num += 1;
+      }
+      val.querySelectorAll("p").forEach(p => {
+        // p.className = p.className.split(" hidden ").join("");
+        p.innerHTML = p.innerHTML.split(style2[0]).join("").split(style2[1]).join("");
+        // if(keyword != "" && p.innerHTML.indexOf(keyword) == -1) p.className = p.className + " hidden ";
+        // else if(keyword != ""){
+        if(keyword != "" && p.innerHTML.indexOf(keyword) > -1){
+          p.innerHTML = p.innerHTML.split(keyword).join(`${style2[0]}${keyword}${style2[1]}`);
+          if(!val.open) val.open = true;
+          val.className = val.className.split(" hidden ").join("");
+          result_num += 1;
+        }
+      });
+    });
+    result.innerHTML = `${result_num}件が該当しました`;
+  }
+  
+  async function dispatch_input_event(elm){
+    await new Promise((resolve)=>{setTimeout(()=>{resolve();}, 2000)});
+    elm.value = "工夫";
+    elm.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  insertLog();
+  s_text.addEventListener("input", search_text);
+  dispatch_input_event(s_text);
+</script>
+
+<!-- recommendログファイル用script -->
+<script>
+  async function rec_insertLog(){
+    const insert_elm = await waitQuerySelector("#rec-logfile-container div:nth-child(2)");
+    const rec_log = (await axios.get('/api/getRecLogFile/user/<%= data.user.id %>/work/<%= data.work.id %>')).data;
+    const resdata = rec_log.result.split("\n");
+    let insert_html = "";
+    const userid = "<%= data.user.id %>";
+    const workid = "<%= data.work.id %>";
+    let accordion_cnt = 0;
+    resdata.forEach((row,index)=>{
+      if(row.indexOf(`user_id='${userid}', work_id='${workid}`) > -1){
+        const _e = resdata[index+2].split(" ");
+        const createdAt = dayjs(`${_e[3]} ${_e[4]} ${_e[5]}`);
+        const updatedAt = dayjs(`${_e[8]} ${_e[9]} ${_e[10]}`);
+        const logs_createdAt = dayjs("<%= data.logs.createdAt %>");
+        // console.log(createdAt, updatedAt);
+        // console.log(logs_createdAt);
+        // console.log("diff:", logs_createdAt.diff(createdAt, 'seconds'));
+        const diff = Math.abs(logs_createdAt.diff(createdAt, 'seconds'));
+        if(diff < 10){
+          let i = 0;
+          while(resdata[index+i].indexOf("-------") <= -1){
+            let in_elm = "";
+            if(i==0){
+              insert_html = insert_html + `
+                <details class="my-1">
+                  <summary class="hover:cursor-pointer hover:bg-sky-500/[.2]">${resdata[index+i]}</summary>
+              `;
+            }else if(resdata[index+i].indexOf("][csv]:") > -1){
+              let header = resdata[index+i].split(',');
+              header = ["id"].concat(header.slice(1,header.length));
+              let body = [];
+              while(resdata[index+i+1] != ""){
+                body.push(resdata[index+i+1].split(','));
+                i+=1;
+              }
+              insert_html = insert_html + `
+                <table class="[&>*]:border [&>*]:border-black [&_th]:border [&_th]:border-black"><thead><tr>
+              `;
+              header.forEach(elm=>{
+                insert_html = insert_html + `
+                  <th>${elm}</th>
+                `;
+              });
+              insert_html = insert_html + `
+                </tr></thead><tbody class="[&_td]:border [&_td]:border-black">
+              `;
+              let userInd;
+              body.forEach((elm,index)=>{
+                if(elm[0] == userid) userInd = index;
+              });
+              body.forEach((elm,index)=>{
+                insert_html = insert_html + `
+                  <tr>
+                `;
+                elm.forEach((v,index2)=>{
+                  if(index == userInd){
+                    insert_html = insert_html + `
+                      <td class="text-lg bg-red-500/[.2] font-bold">${v}</td>
+                    `;
+                  }else{
+                    if(v == body[userInd][index2]){
+                      insert_html = insert_html + `
+                        <td class="bg-green-400/[.3]">${v}</td>
+                      `;
+                    }else{
+                      insert_html = insert_html + `
+                        <td>${v}</td>
+                      `;
+                    }
+                  }
+                });
+                insert_html = insert_html + `
+                  </tr>
+                `;
+              });
+              insert_html = insert_html + `
+                </tbody></table>
+              `;
+            }else{
+              insert_html = insert_html + `<p class="text-gray-600 mb-1">${resdata[index+i]}</p>`;
+            }
+            i += 1;
+          }
+          insert_html = insert_html + `
+            </details>
+          `;
+          accordion_cnt += 1;
+        }
+      }
+    });
+    insert_elm.insertAdjacentHTML("beforeend", insert_html);
+  }
+  rec_insertLog();
 </script>
 
 <%- include('partials/footer'); %>

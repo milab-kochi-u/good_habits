@@ -1,11 +1,32 @@
+const fs = require('fs');
+if(fs.existsSync('/tmp/.env')){
+  fs.writeFileSync('/tmp/.env', '');
+}
 const models = require('../models/index.js');
 const mathlib = require('../util/mathlib.js');
 const { recommend } = require('../util/manageapi.js');
 const { QueryTypes } = require('sequelize');
 const { Op } = require('sequelize');
 const dayjs = require('dayjs');
+var utc = require('dayjs/plugin/utc')
+dayjs.extend(utc)
 
 const sim = {};
+
+// ログ出力設定
+const out = fs.createWriteStream('sim_result.log',{ mode: 0o755 });
+const err = fs.createWriteStream('sim_result.log',{ mode: 0o755 });
+const logger = new console.Console(out,err);
+sim.info_h = (...msg) => {
+  const head = `[${dayjs().format('YYYY-MM-DD HH:mm')}][info]: `;
+  logger.log(head,...msg);
+  console.log(head,...msg);
+}
+sim.user_h = (user,...msg) => {
+  const head = `[${dayjs().format('YYYY-MM-DD HH:mm')}][user_${user.id}]: `;
+  logger.log(head,...msg);
+}
+
 // userの最新のモチベーションを取得する
 sim.getMotivation = async function(user){
   const result = await models.sequelize.query(' \
@@ -15,29 +36,26 @@ sim.getMotivation = async function(user){
     {
       replacements: {userid: user.id},
       type: QueryTypes.SELECT,
+      raw: true,
     },
   );
   return result[0].motivation;
 }
 
-sim.getRecentUsersWave = async function(user){
-  console.log(dayjs().format('YYYY-MM-DD'));
-  const result = await models.sequelize.query(' \
-    SELECT value FROM UsersWaves \
-    WHERE UserId = :userid \
-    AND date <= :date \
-    AND date >= :date',
-    {
-      replacements: {
-        userid: user.id,
-        date: dayjs().format('YYYY-MM-DD'),
-      },
-      type: QueryTypes.SELECT,
-    }
-  );
-  console.log('?',result);
-  process.exit(1);
+async function getRecentElmsWave(id, idName, tableName){
+  let query = ` 
+    SELECT value FROM ${tableName} \
+    WHERE ${idName} = ${id} \
+    ORDER BY createdAt DESC \
+    LIMIT 1
+    `;
+  const result = await models.sequelize.query(query,{type: QueryTypes.SELECT, raw:true},);
+  return result[0].value;
 }
+// user, work, schemeの最新の波の値を返す
+sim.getRecentUsersWave = async user => await getRecentElmsWave(user.id, "UserId", "UsersWaves");
+sim.getRecentWorksWave = async work => await getRecentElmsWave(work.id, "WorkId", "WorksWaves");
+sim.getRecentSchemesWave = async scheme => await getRecentElmsWave(scheme.id, "SchemeId", "SchemesWaves");
 
 // a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
 // TODO: 現在は日毎に計算しているのみであるが，日毎の値もDBに登録しておきたい．
@@ -45,6 +63,19 @@ sim.checkChemistry = function(a, b, day) {
 	const aPhase = Math.sin(2 * Math.PI / (24 - a['waveLength']) * (day - a['initialPhase']));
 	const bPhase = Math.sin(2 * Math.PI / (24 - b['waveLength']) * (day - b['initialPhase']));
 	return 1.0 - Math.abs(aPhase - bPhase) / 2;
+}
+sim.checkChemistry2 = async function({
+  user,
+  work,
+  scheme
+}){
+  if(typeof user === 'undefined') {
+    return 1.0 - Math.abs(await this.getRecentWorksWave(work) - await this.getRecentSchemesWave(scheme)) / 2;
+  }else if(typeof work === 'undefined'){
+    return 1.0 - Math.abs(await this.getRecentUsersWave(user) - await this.getRecentSchemesWave(scheme)) / 2;
+  }else if(typeof scheme === 'undefined'){
+    return 1.0 - Math.abs(await this.getRecentUsersWave(user) - await this.getRecentWorksWave(work)) / 2;
+  }
 }
 
 // Userと相性の良いWork,Schemeを返す
@@ -86,22 +117,22 @@ sim.changeMotivation = async function(user, {
     motiv_need_to_getStart: res.motiv_need_to_getStart,
     motiv_need_to_getItDone: res.motiv_need_to_getItDone,
   }
-  console.log('     ', user.name, 'さんのモチベーションが変更になります．');
+  this.user_h(user, user.name, 'さんのモチベーションが変更になります．');
   if(typeof motiv_increase_val !== 'undefined'){
     new_obj.motivation = mathlib.adjust(mathlib.round(new_obj.motivation + motiv_increase_val));
-    console.log('     ', `motivation: ${res.motivation} -> ${new_obj.motivation}`);
+    this.user_h(user, `motivation: ${res.motivation} -> ${new_obj.motivation}`);
   }
   if(typeof totalMotivation !== 'undefined'){
     new_obj.totalMotivation = totalMotivation;
-    console.log('     ', `totalMotivation: ${res.totalMotivation} -> ${new_obj.totalMotivation}`);
+    this.user_h(user, `totalMotivation: ${res.totalMotivation} -> ${new_obj.totalMotivation}`);
   }
   if(typeof motiv_need_to_getStart !== 'undefined'){
     new_obj.motiv_need_to_getStart = motiv_need_to_getStart;
-    console.log('     ', `motiv_need_to_getStart: ${res.motiv_need_to_getStart} -> ${new_obj.motiv_need_to_getStart}`);
+    this.user_h(user, `motiv_need_to_getStart: ${res.motiv_need_to_getStart} -> ${new_obj.motiv_need_to_getStart}`);
   }
   if(typeof motiv_need_to_getItDone !== 'undefined'){
     new_obj.motiv_need_to_getItDone = motiv_need_to_getItDone;
-    console.log('     ', `motiv_need_to_getItDone: ${res.motiv_need_to_getItDone} -> ${new_obj.motiv_need_to_getItDone}`);
+    this.user_h(user, `motiv_need_to_getItDone: ${res.motiv_need_to_getItDone} -> ${new_obj.motiv_need_to_getItDone}`);
   }
   await user.createUsersMotivation(new_obj);
 }

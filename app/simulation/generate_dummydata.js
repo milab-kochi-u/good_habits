@@ -1,5 +1,5 @@
 // 初期値
-const mathlib = require('./util/mathlib.js');
+const mathlib = require('../util/mathlib.js');
 const yargs = require('yargs');
 
 const argv = yargs

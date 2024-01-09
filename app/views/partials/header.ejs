@@ -22,7 +22,7 @@
       <div class="h-2/3 flex [&>div]:m-2 [&>div]:items-center">
         <div id="db_list" class="">
           <div>
-            <input class="mr-2 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2" id="sqlite-default" type="radio" name="sqlite" onclick="changeDB(this.id)" checked>
+            <input class="mr-2 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2" id="sqlite-default" type="radio" name="sqlite" onclick="changeDB(this.id)">
             <label class="mr-2" for="sqlite-default">Default DB</label>
           </div>
         </div>
@@ -54,7 +54,7 @@
       const elm = document.getElementById("db_list");
       elm.innerHTML =`
         <div>
-          <input class="mr-2 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2" id="sqlite-default" type="radio" name="sqlite" onClick="changeDB(this.id)" checked>
+          <input class="mr-2 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2" id="sqlite-default" type="radio" name="sqlite" onClick="changeDB(this.id)">
           <label class="mr-2" for="sqlite-default">Default DB</label>
         </div>
       `;
@@ -68,22 +68,48 @@
         elm.insertAdjacentHTML('beforeend', msg);
       });
     }
+
+    // すべてのradioボタンを非活性・活性に切り替える
+    function disableRadio(enable=false){
+      const elms = document.querySelectorAll("#db_list input");
+      elms.forEach(elm=>{
+        elm.disabled = !enable;
+      });
+    }
+
     // DBの変更
     async function changeDB(filename){
-      return await axios.post('/api/changeDB',{
+      for (const elm of document.querySelectorAll("#db_list input")){
+        if(elm.id == filename) elm.checked = true;
+        else elm.checked = false;
+      }
+      // radioを非活性に
+      disableRadio();
+      const res = await axios.post('/api/changeDB',{
         file: filename,
       });
+      // 1秒待つ
+      await new Promise((resolve)=>{setTimeout(()=>{resolve();}, 1000)});
+      // radioを活性に
+      disableRadio(true);
+      return res;
     }
     // 現在選択中のDBを取得
     async function getDBstate(){
       await setDBlist();
       const state = (await axios.get('/api/getDBstate')).data;
-      if(state == '0'){
-        const elm = document.getElementById('sqlite-default');
-        elm.checked = true;
-      }else{
-        const elm = document.getElementById(state);
-        elm.checked = true;
+      for(const elm of document.querySelectorAll("#db_list input")){
+        if(state == 0){
+          if(elm.id == "sqlite-default"){
+            elm.checked = true;
+          }else{
+            elm.checked = false;
+          }
+        }else{
+          if(elm.id == state){
+            elm.checked = true;
+          }else elm.checked = false;
+        }
       }
     }
 
@@ -92,6 +118,7 @@
     // ファイルの追加
     const input = document.getElementById("input_file");
     input.addEventListener("change", async()=>{
+      console.log("changed!");
       const form = new FormData();
       form.append('sqlite', input.files[0]);
       if(typeof input.files[0] === 'undefined') {

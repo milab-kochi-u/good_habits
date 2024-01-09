@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var models = require('../models/index.js');
 const { exec } = require('child_process');
+const {get_todays_rec_log} = require('../util/manageapi.js');
 
 // 2023.12.18 Express.js ファイルアップロード (multer 編) https://qiita.com/tadnakam/items/d21d014e09cfa98437a8
 const fs = require('fs');
@@ -34,6 +35,23 @@ router.get('/getFiles', function(req,res,next){
     return bt.mtime - at.mtime;
   });
   return res.send([files[0],files[1]]);
+});
+
+// userごとの/app/sim_result.logを返す
+router.get('/getLogFile/user/:id', async function(req,res,next){
+  const text = fs.readFileSync("/app/sim_result.log", {encoding:'utf-8'});
+  const arr = text.split(/\r\n|\n/);
+  const resdata = arr.filter(row =>{
+    if(row.indexOf(`][user_${req.params.id}]:`) > -1 || row.indexOf(`][info]:`) > -1) return true;
+  });
+  res.send(resdata);
+  return;
+});
+
+router.get('/getRecLogFile/user/:id/work/:wid', async function(req,res,next){
+  const resdata = await get_todays_rec_log(req.params.id,req.params.wid);
+  res.send(resdata);
+  return;
 });
 
 router.get('/getDBstate', function(req,res,next){

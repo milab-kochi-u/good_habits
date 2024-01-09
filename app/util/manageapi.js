@@ -11,7 +11,6 @@ async function recommend(filename, user_id, work_id, model){
   filename = (typeof filename ==='undefined') ? filename_example : filename;
   filepathes = [`${dataroots[0]}/${filename}`, `${dataroots[1]}/${filename}`];
   for(let i of filepathes){
-    console.log(i);
     if(fs.existsSync(i)){
       const data = fs.readFileSync(i);
       const form = new FormData();
@@ -27,5 +26,10 @@ async function recommend(filename, user_id, work_id, model){
   throw new Error('指定されたファイルが存在しません');
 }
 
+async function get_todays_rec_log(user_id,work_id){
+  const url = `${recommend_server_url}/getLog/users/${user_id}/works/${work_id}`;
+  return (await axios.get(url)).data;
+}
 
-module.exports = {recommend};
+
+module.exports = {recommend, get_todays_rec_log};
