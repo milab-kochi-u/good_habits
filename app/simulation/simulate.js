@@ -123,7 +123,17 @@ const {info_h, user_h} = require('./simfunc.js');
       // usersの波をテーブルに登録(まだ利用していないユーザは除く)
       let insertUsersWaves = [];
       for (let user of users.filter((user) => {return user.startDays <= day;})){
-        const usersWaveValue = mathlib.round(Math.sin(2 * Math.PI / (24 - user['waveLength']) * (day - user['initialPhase'])),3);
+        // const usersWaveValue = mathlib.round(Math.sin(2 * Math.PI / (24 - user['waveLength']) * (day - user['initialPhase'])),3);
+        const usersWaveValue = mathlib.round((
+          Math.sin
+          (
+            ((6 * day * Math.PI) / (24 - user['waveLength'])) * (day - user['initialPhase'])
+          ) +
+          Math.cos
+          (
+            ((2 * day * Math.PI) / (24 - user['waveLength'])) + (day * user['initialPhase'])
+          ))/2 ,3);
+
         insertUsersWaves.push({
           value: usersWaveValue,
           date: date.format('YYYY.MM.DD'),
@@ -147,14 +157,15 @@ const {info_h, user_h} = require('./simfunc.js');
               motivation: user.initialMotivation,
             });
           }
-          let selectedWork = sim.getGoodWorS(user,works,passedDays);
+          let selectedWork = await sim.getGoodWorS(user,works,passedDays);
           user_h(user, user.name, 'は', selectedWork.label, 'を継続させたいワークに設定します');
           await user.addWork(selectedWork);
 
           // 工夫を決める
-          let selectedScheme = sim.getGoodWorS(user,schemes,passedDays);
+          let selectedScheme = await sim.getGoodWorS(user,schemes,passedDays,false);
           user_h(user, user.name, 'は工夫「',selectedScheme.label,'」を採用します．');
           await user.addScheme({work: selectedWork, scheme: selectedScheme});
+          user_h(user, `選択した工夫のとりかかり特性との相性は${selectedScheme.chemistry_featureOfStart}, やりきる特性との相性は${selectedScheme.chemistry_featureOfComplete}です`);
           addedWorks = await user.getWorks();
         }
 
@@ -162,8 +173,8 @@ const {info_h, user_h} = require('./simfunc.js');
         let todays_inc_val = 0;
         const todays_users_motivation = await sim.getMotivation(user);
         todays_inc_val += mathlib.round(((user.featureOfStart + user.featureOfComplete) - 1) / 25);
-        if(usersWaveValue > 0.95) todays_inc_val += 0.02;
-        else if(usersWaveValue < -0.92)todays_inc_val += -0.03;
+        if(usersWaveValue > 0.87) todays_inc_val += 0.023;
+        else if(usersWaveValue < -0.80)todays_inc_val += -0.03;
         else todays_inc_val += -0.02;
         if(todays_users_motivation >= 1) todays_inc_val += -0.05;
         else if(todays_users_motivation <= 0) todays_inc_val += 0.03;
@@ -209,25 +220,39 @@ const {info_h, user_h} = require('./simfunc.js');
                   user_h(user, user.name, 'さんは工夫を変更しませんでした．');
                 }
               }else{
-                selectedScheme = sim.getGoodWorS(user,schemes,passedDays);
+                selectedScheme = await sim.getGoodWorS(user,schemes,passedDays,false);
                 user_h(user, user.name, 'さんは工夫を「', selectedScheme.label, '」に変更しました．');
               }
               if(typeof selectedScheme !== 'undefined'){
                 await user.changeScheme({work:addedWork,scheme:selectedScheme});
+                user_h(user, `選択した工夫のとりかかり特性との相性は${selectedScheme.chemistry_featureOfStart}, やりきる特性との相性は${selectedScheme.chemistry_featureOfComplete}です`);
               }
             }
-            for (let d = 0; d < user.intervalDaysForSelfReflection; d++) {
-              // TODO: 予定を立てられるようにする
-              // const chemistry = mathlib.round(sim.checkChemistry(user, addedWork, passedDays));
-              const chemistry = await sim.checkChemistry2({user:user, work:addedWork});
-              if (chemistry < 0.1) continue;  // (仮) 0.1未満なら予定を立てない
-              const task = await user.createTask({
-                work: addedWork,
-                start_time : dayjs(date).add(d, 'day').add(19, 'hour'), // (仮) 常に19時〜20時の予定とする
-                end_time : dayjs(date).add(d, 'day').add(20, 'hour'),
-              });
-              user_h(user, user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'に', addedWork.label, 'を実施する予定を立てました');
-            }
+
+            // 予定を立てる
+            const chemistry = await sim.checkChemistry2({user:user, work:addedWork});
+            // (仮) 0.1未満なら予定を立てない
+            if (chemistry >= 0.1){
+              let insertTasks = [];
+              const uw = (await user.getUsersWorks({
+                where: {WorkId: addedWork.id}
+              }))[0];
+              for (let d = 0; d < user.intervalDaysForSelfReflection; d++) {
+                const start_time = dayjs(date).add(d, 'day').add(19, 'hour'); // (仮) 常に19時〜20時の予定とする
+                insertTasks.push({
+                  UsersWorkId: uw.id,
+                  start_time : start_time,
+                  end_time : dayjs(date).add(d, 'day').add(20, 'hour'),
+                });
+                // const task = await user.createTask({
+                //   work: addedWork,
+                //   start_time : dayjs(date).add(d, 'day').add(19, 'hour'), // (仮) 常に19時〜20時の予定とする
+                //   end_time : dayjs(date).add(d, 'day').add(20, 'hour'),
+                // });
+                user_h(user, user.name, 'が', dayjs(start_time).format('YYYY/MM/DD HH:mm'), 'に', addedWork.label, 'を実施する予定を立てました');
+              }
+              await models.Task.bulkCreate(insertTasks);
+            } 
           }
           user.lastSelfReflectedAt = date;
           user.save();
@@ -268,9 +293,13 @@ const {info_h, user_h} = require('./simfunc.js');
             // const totalMotivation = mathlib.round(currentMotivation * 0.6 +  sim.checkChemistry(user, w, passedDays) * 0.25 + sim.checkChemistry(user, selectedScheme, passedDays) * 0.15);
             const totalMotivation = mathlib.round(currentMotivation * 0.6 +  await sim.checkChemistry2({user:user, work:w}) * 0.25 + await sim.checkChemistry2({user:user, scheme:selectedScheme}) * 0.15);
             //開始に必要なモチベーション
-            const motiv_nedd_to_getStart = mathlib.round((1.05 - user.featureOfStart) - ((selectedScheme.chemistry_featureOfStart - 0.5) * 0.3));
+            const motiv_nedd_to_getStart = mathlib.round(
+              mathlib.adjust((1 - user.featureOfStart) + ((selectedScheme.chemistry_featureOfStart - 0.5) * 0.25))
+            );
             //終了に必要なモチベーション
-            const motiv_need_to_getItDone = mathlib.round((1.05 - user.featureOfComplete) - ((selectedScheme.chemistry_featureOfComplete - 0.5) * 0.3));
+            const motiv_need_to_getItDone = mathlib.round(
+              mathlib.adjust((1 - user.featureOfComplete) + ((selectedScheme.chemistry_featureOfComplete - 0.5) * 0.25))
+            );
             user_h(user,user.name, 'さんの本日の総合モチベーション：', totalMotivation, '    開始に必要な総合モチベーション:', motiv_nedd_to_getStart);
             // DBに登録
             await sim.changeMotivation(user, {

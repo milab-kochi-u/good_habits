@@ -86,7 +86,7 @@
           <p><%= data.user.initialMotivation %></p>
         </div>
       </div>
-      <div class="[&>div]:mx-4 [&>div]:inline-block [&>div]:w-[280px]">
+      <!-- <div class="[&>div]:mx-4 [&>div]:inline-block [&>div]:w-[280px]">
         <div>
           <p>ユーザの波</p>
           <p>
@@ -95,7 +95,7 @@
             \]
           </p>
         </div>
-      </div>
+      </div> -->
     </div>
     <div id="chartParent" class="m-4 p-4 border-4 border-gray-300 overflow-x-scroll rounded relative h-[550px]">
       <canvas id="myChart" class="absolute l-0 t-0"></canvas>
@@ -789,7 +789,7 @@
               `;
               header.forEach(elm=>{
                 insert_html = insert_html + `
-                  <th>${elm}</th>
+                  <th class="">${elm.slice(0,6)}<br>${elm.slice(6,elm.length)}</th>
                 `;
               });
               insert_html = insert_html + `

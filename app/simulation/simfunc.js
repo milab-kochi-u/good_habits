@@ -79,12 +79,14 @@ sim.checkChemistry2 = async function({
 }
 
 // Userと相性の良いWork,Schemeを返す
-sim.getGoodWorS = function(user,all_WorS,passedDays){
+sim.getGoodWorS = async function(user,all_WorS,passedDays,isWork=true){
   // TODO: ワークを決める際にカテゴリの相性を考慮する
   let maxChemistry = -1;
   let selectedWorS = null;
   for(let WorS of all_WorS){
-    const chemistry = mathlib.round(sim.checkChemistry(user,WorS,passedDays));
+    let chemistry;
+    if(isWork) chemistry = mathlib.round(await this.checkChemistry2({user:user,work: WorS}));
+    else chemistry = mathlib.round(await this.checkChemistry2({user:user, scheme: WorS}));
     if(chemistry > maxChemistry){
       selectedWorS = WorS;
       maxChemistry = chemistry;
