@@ -28,13 +28,9 @@ def fwrite(msg, stdout=True, filename=None, add_date=True, ext="log", path=None,
         print(msg, end=end)
 
 # 指定user,workのログを返す
-def get_log(user_id, work_id):
-    dt_now_jst_aware = datetime.datetime.now(
-        datetime.timezone(datetime.timedelta(hours=9))
-    )
-    today = dt_now_jst_aware.strftime('%Y_%m_%d')
-    # とりあえず /app/log/{today}.log　しか見ない
-    path = f"/app/log/{today}.log"
+def get_log(user_id, work_id, sim_date):
+    # とりあえず /app/log/{sim_date}.log　しか見ない
+    path = f"/app/log/{sim_date}.log"
     if os.path.isfile(path):
         resdata =""
         with open(path, mode='r', encoding='utf_8') as f:

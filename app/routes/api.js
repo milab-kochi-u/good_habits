@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var models = require('../models/index.js');
 const { exec } = require('child_process');
-const {get_todays_rec_log} = require('../util/manageapi.js');
+const {get_rec_log} = require('../util/manageapi.js');
 
 // 2023.12.18 Express.js ファイルアップロード (multer 編) https://qiita.com/tadnakam/items/d21d014e09cfa98437a8
 const fs = require('fs');
@@ -49,7 +49,7 @@ router.get('/getLogFile/user/:id', async function(req,res,next){
 });
 
 router.get('/getRecLogFile/user/:id/work/:wid', async function(req,res,next){
-  const resdata = await get_todays_rec_log(req.params.id,req.params.wid);
+  const resdata = await get_rec_log(req.params.id,req.params.wid, req.query.sim_date);
   res.send(resdata);
   return;
 });

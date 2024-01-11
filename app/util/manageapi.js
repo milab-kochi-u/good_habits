@@ -26,10 +26,10 @@ async function recommend(filename, user_id, work_id, model){
   throw new Error('指定されたファイルが存在しません');
 }
 
-async function get_todays_rec_log(user_id,work_id){
-  const url = `${recommend_server_url}/getLog/users/${user_id}/works/${work_id}`;
+async function get_rec_log(user_id,work_id,sim_date){
+  const url = `${recommend_server_url}/getLog/users/${user_id}/works/${work_id}?sim_date=${sim_date}`;
   return (await axios.get(url)).data;
 }
 
 
-module.exports = {recommend, get_todays_rec_log};
+module.exports = {recommend, get_rec_log};

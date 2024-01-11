@@ -28,8 +28,8 @@ async def exec_recommendation(input_file: UploadFile, user_id: int, work_id: int
     return JSONResponse(content=result)
 
 @app.get("/getLog/users/{user_id}/works/{work_id}")
-async def get_log(user_id: int, work_id: int):
-    data = datamanage.get_log(user_id,work_id)
+async def get_log(user_id: int, work_id: int, sim_date: str):
+    data = datamanage.get_log(user_id,work_id, sim_date)
     if(data != 0):
         return {"result": data}
     else:

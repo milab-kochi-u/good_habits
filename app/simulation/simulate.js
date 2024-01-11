@@ -172,12 +172,26 @@ const {info_h, user_h} = require('./simfunc.js');
         // 本日のモチベーションを決める
         let todays_inc_val = 0;
         const todays_users_motivation = await sim.getMotivation(user);
-        todays_inc_val += mathlib.round(((user.featureOfStart + user.featureOfComplete) - 1) / 25);
-        if(usersWaveValue > 0.87) todays_inc_val += 0.023;
-        else if(usersWaveValue < -0.80)todays_inc_val += -0.03;
-        else todays_inc_val += -0.02;
-        if(todays_users_motivation >= 1) todays_inc_val += -0.05;
-        else if(todays_users_motivation <= 0) todays_inc_val += 0.03;
+        for(let elm of [user.featureOfStart, user.featureOfComplete]){
+          let _score = 0;
+          let ratio = 1; 
+          if((todays_users_motivation * 100 * elm * usersWaveValue * 100) % 10 == 1) ratio = 200;
+          if( 0 <= (elm - 0.5)){
+            _score = (0 <= usersWaveValue) ? usersWaveValue * (0.03) * (elm + 1) : usersWaveValue * (0.02) * (1.5 - elm);
+          }else{
+            _score = (0 <= usersWaveValue) ? usersWaveValue * (0.02) * (elm + 1) : usersWaveValue * (0.04) * (1.5 - elm);
+          }
+          todays_inc_val += _score * ratio;
+          user_h(user, 'ratio', ratio, 'score', _score);
+        }
+        // if(usersWaveValue > 0.87) todays_inc_val += 0.023;
+        // else if(usersWaveValue < -0.80)todays_inc_val += -0.03;
+        // else todays_inc_val += -0.02;
+        user_h(user, '本日のモチベーション増加値(仮)', mathlib.round(todays_inc_val));
+
+        if((todays_users_motivation + todays_inc_val) > 1) todays_inc_val += (1 - (todays_users_motivation + todays_inc_val) - 0.05);
+        else if((todays_users_motivation + todays_inc_val) < 0) todays_inc_val += (-1 * (todays_users_motivation + todays_inc_val)) + 0.07;
+        user_h(user, '本日のモチベーション増加値(確定)', mathlib.round(todays_inc_val));
 
         await sim.changeMotivation(user,{
           motiv_increase_val: todays_inc_val,

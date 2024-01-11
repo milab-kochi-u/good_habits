@@ -751,7 +751,8 @@
 <script>
   async function rec_insertLog(){
     const insert_elm = await waitQuerySelector("#rec-logfile-container div:nth-child(2)");
-    const rec_log = (await axios.get('/api/getRecLogFile/user/<%= data.user.id %>/work/<%= data.work.id %>')).data;
+    const sim_date = dayjs("<%= data.logs.createdAt %>").format('YYYY_MM_DD');
+    const rec_log = (await axios.get(`/api/getRecLogFile/user/<%= data.user.id %>/work/<%= data.work.id %>?sim_date=${sim_date}`)).data;
     const resdata = rec_log.result.split("\n");
     let insert_html = "";
     const userid = "<%= data.user.id %>";
