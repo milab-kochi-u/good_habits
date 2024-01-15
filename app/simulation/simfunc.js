@@ -122,19 +122,19 @@ sim.changeMotivation = async function(user, {
   this.user_h(user, user.name, 'さんのモチベーションが変更になります．');
   if(typeof motiv_increase_val !== 'undefined'){
     new_obj.motivation = mathlib.adjust(mathlib.round(new_obj.motivation + motiv_increase_val));
-    this.user_h(user, `motivation: ${res.motivation} -> ${new_obj.motivation}`);
+    this.user_h(user, `motivation: ${res.motivation} → ${new_obj.motivation}`);
   }
   if(typeof totalMotivation !== 'undefined'){
     new_obj.totalMotivation = totalMotivation;
-    this.user_h(user, `totalMotivation: ${res.totalMotivation} -> ${new_obj.totalMotivation}`);
+    this.user_h(user, `totalMotivation: ${res.totalMotivation} → ${new_obj.totalMotivation}`);
   }
   if(typeof motiv_need_to_getStart !== 'undefined'){
     new_obj.motiv_need_to_getStart = motiv_need_to_getStart;
-    this.user_h(user, `motiv_need_to_getStart: ${res.motiv_need_to_getStart} -> ${new_obj.motiv_need_to_getStart}`);
+    this.user_h(user, `motiv_need_to_getStart: ${res.motiv_need_to_getStart} → ${new_obj.motiv_need_to_getStart}`);
   }
   if(typeof motiv_need_to_getItDone !== 'undefined'){
     new_obj.motiv_need_to_getItDone = motiv_need_to_getItDone;
-    this.user_h(user, `motiv_need_to_getItDone: ${res.motiv_need_to_getItDone} -> ${new_obj.motiv_need_to_getItDone}`);
+    this.user_h(user, `motiv_need_to_getItDone: ${res.motiv_need_to_getItDone} → ${new_obj.motiv_need_to_getItDone}`);
   }
   await user.createUsersMotivation(new_obj);
 }

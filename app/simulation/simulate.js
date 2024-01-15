@@ -141,6 +141,10 @@ const {info_h, user_h} = require('./simfunc.js');
         });
       }
       await models.UsersWave.bulkCreate(insertUsersWaves);
+
+      const debuff = ((1000-passedDays) / 1000) - 1;
+      info_h('debuff:', mathlib.round(debuff, 4));
+
       for (let user of users) {
         if (user.startDays > day) continue;  // まだ利用を始めていない
         let addedWorks = await user.getWorks();
@@ -171,19 +175,21 @@ const {info_h, user_h} = require('./simfunc.js');
 
         // 本日のモチベーションを決める
         let todays_inc_val = 0;
+        let _score = debuff;
         const todays_users_motivation = await sim.getMotivation(user);
         for(let elm of [user.featureOfStart, user.featureOfComplete]){
-          let _score = 0;
-          let ratio = 1; 
-          if((todays_users_motivation * 100 * elm * usersWaveValue * 100) % 10 == 1) ratio = 200;
           if( 0 <= (elm - 0.5)){
-            _score = (0 <= usersWaveValue) ? usersWaveValue * (0.03) * (elm + 1) : usersWaveValue * (0.02) * (1.5 - elm);
+            _score += (0 <= usersWaveValue) ? usersWaveValue * (0.026) * (elm + 1) : usersWaveValue * (0.028) * (1.5 - elm);
           }else{
-            _score = (0 <= usersWaveValue) ? usersWaveValue * (0.02) * (elm + 1) : usersWaveValue * (0.04) * (1.5 - elm);
+            _score += (0 <= usersWaveValue) ? usersWaveValue * (0.020) * (elm + 1) : usersWaveValue * (0.043) * (1.5 - elm);
           }
-          todays_inc_val += _score * ratio;
-          user_h(user, 'ratio', ratio, 'score', _score);
+          user_h(user, 'score', _score);
         }
+        let ratio = 1; 
+        ratio = parseInt(Math.abs(todays_users_motivation * usersWaveValue * passedDays * Math.pow(100,2)));
+        ratio =  ratio % 10 == 0 ? 8 : (ratio % 10 == 1 ? 5 : (ratio % 10 == 2 ? 2 : 1));
+        user_h(user, 'ratio',ratio);
+        todays_inc_val += _score * ratio;
         // if(usersWaveValue > 0.87) todays_inc_val += 0.023;
         // else if(usersWaveValue < -0.80)todays_inc_val += -0.03;
         // else todays_inc_val += -0.02;
@@ -308,11 +314,19 @@ const {info_h, user_h} = require('./simfunc.js');
             const totalMotivation = mathlib.round(currentMotivation * 0.6 +  await sim.checkChemistry2({user:user, work:w}) * 0.25 + await sim.checkChemistry2({user:user, scheme:selectedScheme}) * 0.15);
             //開始に必要なモチベーション
             const motiv_nedd_to_getStart = mathlib.round(
-              mathlib.adjust((1 - user.featureOfStart) + ((selectedScheme.chemistry_featureOfStart - 0.5) * 0.25))
+              mathlib.adjust(
+                ((1 - user.featureOfStart) * 0.9)
+                -
+                ((0.25 - Math.abs(user.featureOfStart - selectedScheme.chemistry_featureOfStart))*0.35)
+              )
             );
             //終了に必要なモチベーション
             const motiv_need_to_getItDone = mathlib.round(
-              mathlib.adjust((1 - user.featureOfComplete) + ((selectedScheme.chemistry_featureOfComplete - 0.5) * 0.25))
+              mathlib.adjust(
+                ((1 - user.featureOfComplete) * 0.9)
+                -
+                ((0.25 - Math.abs(user.featureOfComplete - selectedScheme.chemistry_featureOfComplete))*0.35)
+              )
             );
             user_h(user,user.name, 'さんの本日の総合モチベーション：', totalMotivation, '    開始に必要な総合モチベーション:', motiv_nedd_to_getStart);
             // DBに登録
@@ -327,9 +341,10 @@ const {info_h, user_h} = require('./simfunc.js');
             if (totalMotivation <= motiv_nedd_to_getStart){ // ワークの難易度によって閾値が増減する
             // if (totalMotivation < mathlib.round(1 - user.featureOfStart + ワークの難易度)){
               user_h(user, '本日はサボりました...');
+              motiv_increase_val += -0.01;
             }else{
               //　とりかかり成功
-              motiv_increase_val += 0.01;
+              motiv_increase_val += 0.02;
               // task.open(task.start_time);
               task.open(dayjs());
               user_h(user, user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + dayjs().format('YYYY/MM/DD HH:mm:ss') + 'に開始しました．');
@@ -341,15 +356,16 @@ const {info_h, user_h} = require('./simfunc.js');
                 task.close(dayjs());
                 // console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + (process.env['FAKETIME']).split("@")[1] + 'に終了しました．');
                 user_h(user, user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + dayjs().format('YYYY/MM/DD HH:mm:ss') + 'に終了しました．');
-                motiv_increase_val += 0.01;
+                motiv_increase_val += 0.03;
               }else{
                 user_h(user, 'やりきりませんでした...');
+                motiv_increase_val += 0.02;
               }
-              // モチベーションを更新する
-              await sim.changeMotivation(user, {
-                motiv_increase_val: motiv_increase_val,
-              }); 
             }
+            // モチベーションを更新する
+            await sim.changeMotivation(user, {
+              motiv_increase_val: motiv_increase_val,
+            }); 
           }
         }
         // 時間を元に戻す

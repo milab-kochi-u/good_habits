@@ -29,14 +29,7 @@ const numberOfSchemes = 100;
 const possibilityOfMultiCategory = 0.3;	// 複数のカテゴリにまたがる可能性
 const numberOfSignificantDigits = 2	// 有効桁数（乱数などの実数値の小数点以下の桁数が長くなりすぎるため）
 // const numberOfDaysForExperiment = 365 * 0.5;	// 実験期間の日数
-const candidatesOfIntervalDaysForSelfReflection = [7, 14, 30];	// 振り返りを行う日数の候補
-
-// a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
-// function checkChemistry(a, b, day) {
-// 	const aPhase = Math.sin(Math.PI * 2 * (day * 24 - a['initialPhase']) / a['waveLength']);
-// 	const bPhase = Math.sin(Math.PI * 2 * (day * 24 - b['initialPhase']) / b['waveLength']);
-// 	return 1.0 - Math.abs(aPhase - bPhase) / 2;
-// }
+const candidatesOfIntervalDaysForSelfReflection = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30];	// 振り返りを行う日数の候補
 
 // 各カテゴリの優先度を決める（優先度: 0〜1, 大きいほど優先権が高い，相性度と乗算して利用する）
 function decidePriorityOfCategories() {
