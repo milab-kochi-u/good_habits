@@ -1,6 +1,7 @@
 // 初期値
 const mathlib = require('../util/mathlib.js');
 const yargs = require('yargs');
+const fs = require('fs');
 
 const argv = yargs
 	.option('users', {
@@ -17,7 +18,7 @@ const argv = yargs
 const rangeOfInitialMotivation = [30, 80];	// 動機の高さ (0〜1) の初期値の範囲（×100）（30 → 実際は 0.3）
 const rangeOfThresholdOfWorkChanging = [0, 5];	// ワークを変更する閾値の範囲（×100）（30 → 実際は 0.3）
 // const rangeOfThresholdOfSchemeChanging = [0, 20];	// 工夫を変更する閾値の範囲（×100）（30 → 実際は 0.3）
-const rangeOfCycleDays = [-10,10];	// 波長の周期の日数の範囲
+const rangeOfCycleDays = [-15,15];	// 波長の周期の日数の範囲
 // const rangeOfCycleHours = { 'user': [0, 8], 'work': [8, 16], 'scheme': [16, 24] };	// 24時間を3等分
 
 // TODO:乱数の出力は整数であり，日数単位として扱っているので，今後時間単位の乱数として扱いたい
@@ -136,7 +137,6 @@ for (let i = 0; i < numberOfUsers; i++) {
 
 	let featureOfComplete = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
 
-	// TODO: これを正規分布に合わせる
 	const user = {
 		'name': 'user' + num,
 		'waveLength': waveLength,
@@ -161,4 +161,4 @@ const dummydata = {
 	'users': users,
 };
 // console.log(dummydata);
-console.log(JSON.stringify(dummydata));
+fs.writeFileSync("dummydata.json", JSON.stringify(dummydata));

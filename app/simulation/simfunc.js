@@ -1,7 +1,4 @@
 const fs = require('fs');
-if(fs.existsSync('/tmp/.env')){
-  fs.writeFileSync('/tmp/.env', '');
-}
 const models = require('../models/index.js');
 const mathlib = require('../util/mathlib.js');
 const { recommend } = require('../util/manageapi.js');
@@ -58,7 +55,6 @@ sim.getRecentWorksWave = async work => await getRecentElmsWave(work.id, "WorkId"
 sim.getRecentSchemesWave = async scheme => await getRecentElmsWave(scheme.id, "SchemeId", "SchemesWaves");
 
 // a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
-// TODO: 現在は日毎に計算しているのみであるが，日毎の値もDBに登録しておきたい．
 sim.checkChemistry = function(a, b, day) {
 	const aPhase = Math.sin(2 * Math.PI / (24 - a['waveLength']) * (day - a['initialPhase']));
 	const bPhase = Math.sin(2 * Math.PI / (24 - b['waveLength']) * (day - b['initialPhase']));
@@ -77,22 +73,32 @@ sim.checkChemistry2 = async function({
     return 1.0 - Math.abs(await this.getRecentUsersWave(user) - await this.getRecentWorksWave(work)) / 2;
   }
 }
-
-// Userと相性の良いWork,Schemeを返す
-sim.getGoodWorS = async function(user,all_WorS,passedDays,isWork=true){
+// Userとn番目に相性の良いWork,Schemeを返す
+sim.getGoodWorS = async function(user,all_WorS,passedDays,isWork=true,n=1){
   // TODO: ワークを決める際にカテゴリの相性を考慮する
-  let maxChemistry = -1;
-  let selectedWorS = null;
-  for(let WorS of all_WorS){
-    let chemistry;
-    if(isWork) chemistry = mathlib.round(await this.checkChemistry2({user:user,work: WorS}));
-    else chemistry = mathlib.round(await this.checkChemistry2({user:user, scheme: WorS}));
-    if(chemistry > maxChemistry){
-      selectedWorS = WorS;
-      maxChemistry = chemistry;
+  let calculated_list = [];
+  let calculated_index_list = [];
+  if(all_WorS.length == 1) return all_WorS[0];
+  for(let i = 0; i < n; i++){
+    let maxChemistry = -1;
+    let selectedWorS = null;
+    const all = all_WorS.filter(elm=>!(calculated_index_list.includes(elm.id)));
+    if(!all.length) {
+      return calculated_list.slice(-1)[0];
     }
+    for(let WorS of all){
+      let chemistry;
+      if(isWork) chemistry = mathlib.round(await this.checkChemistry2({user:user,work: WorS}));
+      else chemistry = mathlib.round(await this.checkChemistry2({user:user, scheme: WorS}));
+      if(chemistry > maxChemistry){
+        selectedWorS = WorS;
+        maxChemistry = chemistry;
+      }
+    }
+    calculated_list.push(selectedWorS);
+    calculated_index_list.push(selectedWorS.id);
   }
-  return selectedWorS;
+  return calculated_list[n-1];
 }
 
 // userのモチベーションを指定値だけ増減させる（負の数も可能）

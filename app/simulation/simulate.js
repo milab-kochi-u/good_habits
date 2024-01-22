@@ -5,6 +5,7 @@ const mathlib = require('../util/mathlib.js');
 const models = require('../models/index.js');
 const sim = require('./simfunc.js');
 const {info_h, user_h} = require('./simfunc.js');
+const { execSync,exec } = require('child_process');
 
 
 (async() => {
@@ -165,8 +166,8 @@ const {info_h, user_h} = require('./simfunc.js');
           user_h(user, user.name, 'は', selectedWork.label, 'を継続させたいワークに設定します');
           await user.addWork(selectedWork);
 
-          // 工夫を決める
-          let selectedScheme = await sim.getGoodWorS(user,schemes,passedDays,false);
+          // 工夫を決める(工夫は5番目に相性が良いやつ)
+          let selectedScheme = await sim.getGoodWorS(user,schemes,passedDays,false,5);
           user_h(user, user.name, 'は工夫「',selectedScheme.label,'」を採用します．');
           await user.addScheme({work: selectedWork, scheme: selectedScheme});
           user_h(user, `選択した工夫のとりかかり特性との相性は${selectedScheme.chemistry_featureOfStart}, やりきる特性との相性は${selectedScheme.chemistry_featureOfComplete}です`);
@@ -240,7 +241,7 @@ const {info_h, user_h} = require('./simfunc.js');
                   user_h(user, user.name, 'さんは工夫を変更しませんでした．');
                 }
               }else{
-                selectedScheme = await sim.getGoodWorS(user,schemes,passedDays,false);
+                selectedScheme = await sim.getGoodWorS(user,schemes,passedDays,false,5);
                 user_h(user, user.name, 'さんは工夫を「', selectedScheme.label, '」に変更しました．');
               }
               if(typeof selectedScheme !== 'undefined'){
@@ -310,14 +311,20 @@ const {info_h, user_h} = require('./simfunc.js');
             })).motivation;
 
             //総合モチベーション
-            // const totalMotivation = mathlib.round(currentMotivation * 0.6 +  sim.checkChemistry(user, w, passedDays) * 0.25 + sim.checkChemistry(user, selectedScheme, passedDays) * 0.15);
-            const totalMotivation = mathlib.round(currentMotivation * 0.6 +  await sim.checkChemistry2({user:user, work:w}) * 0.25 + await sim.checkChemistry2({user:user, scheme:selectedScheme}) * 0.15);
+            const tM_term1 = currentMotivation * 0.6;
+            const tM_term2 = await sim.checkChemistry2({user:user, work:w}) * 0.4 * (1 / 3);
+            const tM_term3 = await sim.checkChemistry2({work:w, scheme:selectedScheme}) * 0.4 * (1 / 3);
+            const tM_term4 = await sim.checkChemistry2({user:user, scheme:selectedScheme}) * 0.4 * (1 / 3);
+            user_h(user, "総合モチベ因子(基礎モチベ):", mathlib.round(tM_term1), "因子(u,wの相性):", mathlib.round(tM_term2), "因子(w,sの相性):", mathlib.round(tM_term3), "因子(u,sの相性):", mathlib.round(tM_term4));
+            const totalMotivation = mathlib.round(mathlib.adjust(
+              tM_term1 + tM_term2 + tM_term3 + tM_term4
+            ));
             //開始に必要なモチベーション
-            const motiv_nedd_to_getStart = mathlib.round(
+            const motiv_need_to_getStart = mathlib.round(
               mathlib.adjust(
                 ((1 - user.featureOfStart) * 0.9)
                 -
-                ((0.25 - Math.abs(user.featureOfStart - selectedScheme.chemistry_featureOfStart))*0.35)
+                ((0.25 - Math.abs(user.featureOfStart - selectedScheme.chemistry_featureOfStart))*0.4)
               )
             );
             //終了に必要なモチベーション
@@ -325,40 +332,48 @@ const {info_h, user_h} = require('./simfunc.js');
               mathlib.adjust(
                 ((1 - user.featureOfComplete) * 0.9)
                 -
-                ((0.25 - Math.abs(user.featureOfComplete - selectedScheme.chemistry_featureOfComplete))*0.35)
+                ((0.25 - Math.abs(user.featureOfComplete - selectedScheme.chemistry_featureOfComplete))*0.4)
               )
             );
-            user_h(user,user.name, 'さんの本日の総合モチベーション：', totalMotivation, '    開始に必要な総合モチベーション:', motiv_nedd_to_getStart);
+            user_h(user,'総合モチベーション：', totalMotivation);
+            user_h(user,'開始に必要な総合モチベーション:', motiv_need_to_getStart);
+            user_h(user,'終了に必要な総合モチベーション:', motiv_need_to_getItDone);
             // DBに登録
             await sim.changeMotivation(user, {
               totalMotivation: totalMotivation,
-              motiv_need_to_getStart: motiv_nedd_to_getStart,
+              motiv_need_to_getStart: motiv_need_to_getStart,
               motiv_need_to_getItDone: motiv_need_to_getItDone,
             });
             // モチベーションの上昇量
             let motiv_increase_val = 0;
             // やる気に対して，必要とされるやる気の閾値は”とりかかりの特性値”で決める
-            if (totalMotivation <= motiv_nedd_to_getStart){ // ワークの難易度によって閾値が増減する
+            if (totalMotivation <= motiv_need_to_getStart){ // ワークの難易度によって閾値が増減する
             // if (totalMotivation < mathlib.round(1 - user.featureOfStart + ワークの難易度)){
               user_h(user, '本日はサボりました...');
+              await task.failed();
               motiv_increase_val += -0.01;
             }else{
               //　とりかかり成功
               motiv_increase_val += 0.02;
+              // モチベーションを更新する
+              await sim.changeMotivation(user, {
+                motiv_increase_val: motiv_increase_val,
+              }); 
               // task.open(task.start_time);
-              task.open(dayjs());
+              await task.open(dayjs());
               user_h(user, user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + dayjs().format('YYYY/MM/DD HH:mm:ss') + 'に開始しました．');
 
               user_h(user,'終了に必要な総合モチベーション:', motiv_need_to_getItDone);
               if(totalMotivation > motiv_need_to_getItDone){ // やりきる
                 process.env['FAKETIME'] = "@" + dayjs(task.end_time).format('YYYY-MM-DD HH:mm:ss');
                 // task.close(task.end_time);
-                task.close(dayjs());
+                await task.close(dayjs());
                 // console.log('           ', user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + (process.env['FAKETIME']).split("@")[1] + 'に終了しました．');
                 user_h(user, user.name, 'が', dayjs(task.start_time).format('YYYY/MM/DD HH:mm'), 'の予定[work:' + w.label + ']を' + dayjs().format('YYYY/MM/DD HH:mm:ss') + 'に終了しました．');
                 motiv_increase_val += 0.03;
               }else{
                 user_h(user, 'やりきりませんでした...');
+                await task.failed();
                 motiv_increase_val += 0.02;
               }
             }
@@ -394,6 +409,11 @@ const {info_h, user_h} = require('./simfunc.js');
 
     let execT_end = performance.now();
     info_h('処理時間：', mathlib.round((execT_end - execT_start) / 1000,2), '秒');
+    // await models.sequelize.close();
+    const pid2 = parseInt(execSync("echo $PPID").toString());
+    console.log("start.shの親, start.sh, node(PID):",argv.pid0, argv.pid1,pid2);
+    // execSync(`nohup bash -c 'sleep 1 ; kill -9 ${argv.pid1} ${pid2}' &`);
+    exec(`(sleep 1 ; kill -9 ${argv.pid1} ${pid2}) &`);
   }
   catch (e) {
     console.error(`Error: ${e.message}`);

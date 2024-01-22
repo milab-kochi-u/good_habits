@@ -1,7 +1,7 @@
 import os
 import tempfile
 from util.datamanage import fwrite
-from recommended_model import cf_mem_user
+from recommended_model import cf_mem_user,cf_mem_user_2
 
 async def recommend(finput, user_id, work_id, model):
     # file-like object (またはSpooledTemporaryFile)を名前付き一時ファイルとして保存
@@ -22,6 +22,11 @@ async def recommend(finput, user_id, work_id, model):
         # クエリに応じた推薦モデルを実施
         if model == "cf_mem_user":
             result = cf_mem_user.main(fp,user_id,work_id)
+        elif model == "cf_mem_user_2":
+            result = cf_mem_user_2.main(fp,user_id,work_id)
+        else:
+            result = None
+
         # 一時ファイルを削除
         os.remove(fp)
         fwrite(f"一時ファイル{fp}を削除しました")

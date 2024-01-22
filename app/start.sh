@@ -81,7 +81,7 @@ dateinit(){
 
 # ダミーデータの生成
 generate_dummydata(){
-	node simulation/generate_dummydata.js ${ARGS_GENERATEDATA} > dummydata.json
+	node simulation/generate_dummydata.js ${ARGS_GENERATEDATA}
 }
 
 # ダミーデータを読み込む
@@ -93,9 +93,9 @@ read_dummydata(){
 exec_simulation(){
 	# -- 過去のシミュレーション結果を削除し，2020年1月1日から指定日間のシミュレーションを行う
 	if [ ${NO_INIT} = "YES" ];then
-		node simulation/simulate.js -d "${SETDAYS}" ${DO_RECOMMEND}
+		node simulation/simulate.js -d "${SETDAYS}" ${DO_RECOMMEND} --pid0 $PPID --pid1 $$
 	else
-		node simulation/simulate.js --init "${SETDATE}" -d "${SETDAYS}" ${DO_RECOMMEND}
+		node simulation/simulate.js --init "${SETDATE}" -d "${SETDAYS}" ${DO_RECOMMEND} --pid0 $PPID --pid1 $$
 	fi
 }
 

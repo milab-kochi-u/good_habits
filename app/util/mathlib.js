@@ -1,5 +1,8 @@
 // 初期値
-const seed = 3;	// 乱数のシード値
+// const seed = 3;	// 乱数のシード値
+const seed = Math.floor(Math.random() * 100);
+console.log("seed",seed);
+
 const numberOfSignificantDigits = 2	// 有効桁数（乱数などの実数値の小数点以下の桁数が長くなりすぎるため）
 
 // https://lowreal.net/2019/06/20/1

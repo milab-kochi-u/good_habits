@@ -15,7 +15,7 @@ router.get('/', async function(req, res, next) {
       parent: "/",
       user: "/users"
     },
-    logs: sim_log,
+    logs: JSON.stringify(sim_log),
   });
 });
 

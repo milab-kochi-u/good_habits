@@ -28,11 +28,12 @@
         </div>
         <div class="p-1 border-dashed border-2 border-indigo-600">
           <div class="flex">
-            <label class="mr-2" for="input_file">ファイルを送信する: </label>
+            <label class="mr-2" for="input_files">ファイルを送信する: </label>
             <p id="result_notice" class="text-red-600 text-xl"></p>
           </div>
           <div>
-            <input type="file" id="input_file" name="sqlite" accept=".sqlite3" size="40">
+            <!-- <input type="file" id="input_file" name="sqlite" accept=".sqlite3" size="40"> -->
+            <input type="file" id="input_files" name="files" accept=".sqlite3,.log" size="40" multiple>
           </div>
         </div>
       </div>
@@ -50,7 +51,9 @@
     }
     // DBリストの反映
     async function setDBlist(){
-      const dbs = await getDBlist();
+      const dbData = await getDBlist();
+      const dbs = [dbData[0], dbData[1]];
+      const logs = [dbData[2], dbData[3]];
       const elm = document.getElementById("db_list");
       elm.innerHTML =`
         <div>
@@ -58,14 +61,16 @@
           <label class="mr-2" for="sqlite-default">Default DB</label>
         </div>
       `;
-      dbs.forEach(element => {
-        const msg = `
-        <div>
-          <input class="mr-2 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2" id="${element}" type="radio" name="sqlite" onClick="changeDB(this.id)">
-          <label class="mr-2" for="${element}">${element}</label>
-        </div>
-        `;
-        elm.insertAdjacentHTML('beforeend', msg);
+      dbs.forEach((element,index) => {
+        if(element){
+          const msg = `
+          <div>
+            <input class="mr-2 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2" id="${element}" type="radio" name="sqlite" onClick="changeDB(this.id)">
+            <label class="mr-2" for="${element}">${element} ${logs[index] ? '<span class="text-red-500 font-bold">log有</span>' : '<span class="text-blue-500 font-bold">log無</span>'}</span></label>
+          </div>
+          `;
+          elm.insertAdjacentHTML('beforeend', msg);
+        }
       });
     }
 
@@ -116,17 +121,20 @@
     getDBstate();
 
     // ファイルの追加
-    const input = document.getElementById("input_file");
-    input.addEventListener("change", async()=>{
-      console.log("changed!");
+    const inputs = document.getElementById("input_files");
+    inputs.addEventListener("change", async()=>{
+      console.log("files form changed!");
+      console.log(inputs);
       const form = new FormData();
-      form.append('sqlite', input.files[0]);
-      if(typeof input.files[0] === 'undefined') {
+      for(let i = 0; i < inputs.files.length; i++){
+        form.append("files", inputs.files[i]);
+      }
+      if(typeof inputs.files[0] === 'undefined') {
         document.getElementById("result_notice").innerHTML="";
         return;
       }
       document.getElementById("result_notice").innerHTML="waiting...";
-      const url = "/api/upload_single";
+      const url = "/api/uploads";
       try{
         await new Promise((resolve)=>{setTimeout(()=>{resolve();}, 2000)});
         const result = await axios.post(url,form);
@@ -134,7 +142,7 @@
         console.log("success");
         document.getElementById("result_notice").innerHTML="upload success";
         await setDBlist();
-      } catch (error) {
+      }catch(error){
         console.log(error);
         document.getElementById("result_notice").innerHTML="upload failed";
       }
