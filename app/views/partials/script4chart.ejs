@@ -93,7 +93,7 @@
         cnt[3] += 1;
       }
     }
-    console.log(data_arr[i].motivations)
+    // console.log(data_arr[i].motivations)
     base_motiv_avg = Math.round(base_motiv_avg / cnt[0] * Math.pow(10,2)) / Math.pow(10,2);
     total_motiv_avg = Math.round(total_motiv_avg / cnt[1] * Math.pow(10,2)) / Math.pow(10,2);
     getStart_avg = Math.round(getStart_avg / cnt[2] * Math.pow(10,2)) / Math.pow(10,2);
@@ -129,6 +129,26 @@
     show_data.daily.bar14_efficacy_rate_ma[i] = getMAinArray(i,14);
     // 7本実施率移動平均
   }
+
+  // 総合の実施率を計算してみる
+  const task_total = show_data.daily.tasks.reduce((sum,elm)=>{
+    return sum + elm;
+  },0)
+  const started_tasks_total = show_data.daily.started_tasks.reduce((sum,elm)=>{
+    return sum + elm;
+  },0)
+  const finished_tasks_total = show_data.daily.finished_tasks.reduce((sum,elm)=>{
+    return sum + elm;
+  },0)
+  const param_list = document.getElementById("sim_parameter");
+  param_list.insertAdjacentHTML('beforeend', `<div><p>総合達成率</p>
+    <p>${(finished_tasks_total/task_total).toFixed(4)}</p></div>
+    <div><p>開始できた割合</p><p>${(started_tasks_total/task_total).toFixed(4)}</p></div>
+    <div><p>開始タスクの内，終了できた割合</p><p>${(finished_tasks_total/started_tasks_total).toFixed(4)}</p></div>
+  `);
+  console.log('task total', task_total)
+  console.log('started task total', started_tasks_total)
+  console.log('finished task total', finished_tasks_total)
 
   // 週ごとにまとめる(日曜～土曜分をひとまとめにする)
   // 日:0, 土:6

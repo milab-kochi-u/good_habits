@@ -24,6 +24,7 @@ async def recommend(finput, user_id, work_id, model):
             result = cf_mem_user.main(fp,user_id,work_id)
         elif model == "cf_mem_user_2":
             result = cf_mem_user_2.main(fp,user_id,work_id)
+            fwrite(f"result:{result}")
         else:
             result = None
 

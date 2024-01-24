@@ -102,8 +102,8 @@ def create_US_table(filename, work_id):
     users_ids = Users[Users['id'].isin(uw_us['UserId'])]['id']
     User_Scheme_matrix = pd.DataFrame(index=users_ids.to_numpy(), columns=schemes_labels.to_numpy())
 
-    # 指定時刻時点でのUsersWorkと紐づいたschemeのidを返す
-    def get_schemes_of_the_time(users_work_id, date_time):
+    # taskテーブルに使用中のschemeIdを付けて返す(必ず1つschemeを選ぶ前提なのでschemeを未採用・複数採用した場合の検証は未実施)
+    def get_schemes_of_the_time():
         '''
             date_timeはdatetime型とする
 
@@ -112,25 +112,57 @@ def create_US_table(filename, work_id):
             (createdAt < date_time AND deletedAt IS NULL)
             ・現在削除されているがdate_time時点では使っていたもの
             (deletedAt IS NOT NULL AND createdAt < date_time AND date_time < deletedAt)
+
+            date_time の求め方
+            ・開始できなかった場合
+            start_time
+            ・開始できた場合
+            started_at
         '''
+        t_us = pd.merge(Tasks, UsersSchemes_d);
+        # 開始できなかった場合のデータ
+        start_fail_base = t_us[t_us['started_at'].isna()]
+        start_fail1= start_fail_base[(start_fail_base['createdAt'] < start_fail_base['start_time']) & start_fail_base['deletedAt'].isna()]
+        start_fail2 = start_fail_base[start_fail_base['deletedAt'].notna() & (start_fail_base['createdAt'] < start_fail_base['start_time']) & (start_fail_base['start_time'] < start_fail_base['deletedAt'])]
+        start_success_base = t_us[t_us['started_at'].notna()]
+        start_success1= start_success_base[(start_success_base['createdAt'] < start_success_base['started_at']) & start_success_base['deletedAt'].isna()]
+        start_success2 = start_success_base[start_success_base['deletedAt'].notna() & (start_success_base['createdAt'] < start_success_base['started_at']) & (start_success_base['started_at'] < start_success_base['deletedAt'])]
+        conc = pd.concat([start_fail1,start_fail2,start_success1,start_success2])
+        return conc
         
     # daletedAtはobject型なのでDatetime型に
     UsersSchemes_d['deletedAt'] = pd.to_datetime(UsersSchemes_d['deletedAt'], errors='coerce')
     UsersSchemes_d['createdAt'] = pd.to_datetime(UsersSchemes_d['createdAt'], errors='coerce')
     Tasks['start_time'] = pd.to_datetime(Tasks['start_time'], errors='coerce')
+    Tasks['started_at'] = pd.to_datetime(Tasks['started_at'], errors='coerce')
+    Tasks['finished_at'] = pd.to_datetime(Tasks['finished_at'], errors='coerce')
 
-    # User - Task
-    u_t = pd.merge(Tasks, UsersWorks, left_on="UsersWorkId", right_on="id").drop(columns=['id_y', 'WorkId'])
-    fwrite(f"User - Task\n{u_t}")
+    # Task - UsersSchemes_d から全てのデータにおけるタスク実行時のschemeを取得する
+    t_us_d = get_schemes_of_the_time()
 
-    # User - Task から全てのデータにおいてタスク実行時のschemeを取得する
+    # 行列の値を計算(UserはUsersWorksを1つしか持たない前提の検証のみ実施)
+    for UserId in User_Scheme_matrix.index:
+        # fwrite(f"User_Scheme_matrix.index:\n{User_Scheme_matrix.index}\nid:{UserId}")
+        users_schemes = uw_us.loc[uw_us['UserId'] == UserId, 'SchemeId']
+        # fwrite(f"users_schemes\n{users_schemes}")
 
+        users_UsersWorks_id = UsersWorks[UsersWorks['UserId'] == UserId]['id'].tolist()[0]
+        # t_us_d から該当ユーザのUsersWorkIdを持つデータを抽出
+        users_t_us_d = t_us_d[t_us_d['UsersWorkId'] == users_UsersWorks_id]
+        # SchemeIdごとにグループ分け
+        def myfunc(x):
+            if x in users_t_us_d['SchemeId'].values:
+                gbp = users_t_us_d.groupby('SchemeId')
+                gb = gbp.get_group(x)
+                gbsum = gb.shape[0]
+                gbtrue = (gb['result'] == 1).sum()
+                gbfalse = (gb['result'] == 0).sum()
+                return (gbtrue / gbsum)
+            else:
+                return -1
+        
+        User_Scheme_matrix.loc[UserId] = Schemes_during_use['SchemeId'].apply(myfunc).values
 
-
-    # 行列の値を計算
-    for id in User_Scheme_matrix.index:
-        users_schemes = uw_us.loc[uw_us['UserId'] == id, 'SchemeId']
-        User_Scheme_matrix.loc[id] = Schemes_during_use['SchemeId'].isin(users_schemes).values * 1
     cur.close()
     conn.close()
     return User_Scheme_matrix
@@ -148,6 +180,8 @@ def create_US_table(filename, work_id):
         推薦を受け取る対象ユーザの未採用工夫に対する予測評価付き配列
 """
 def recommend(matrix, user_id):
+    fwrite(f"matrix:\n{matrix.T}")
+    fwrite(f"user_id:{user_id}")
     # 推薦を受け取る対象ユーザの列を取得
     u_i = matrix[user_id]
     others = matrix.drop(columns=user_id)
@@ -174,14 +208,16 @@ def recommend(matrix, user_id):
 
     # 未採用の工夫に対して採用スコアを予測
 
-
     # 既存手法でやってみる
     predict_values = pd.Series(name="Predicted effect of schemes")
     if sim_set.shape[0] == 0:
         return predict_values 
-    for index in u_i[u_i == 0].index:
-        user_score_avg = 1
-        other_score_avg = 1
+        
+    ser_score_avg = u_i[u_i != -1].mean()
+    other_score_avg = others[sim_set.index]
+    other_score_avg = other_score_avg[other_score_avg != -1]
+    fwrite(f"others score avg {other_score_avg}")
+    for index in u_i[u_i == -1].index:
 
         others_index_score = others[sim_set.index].loc[index]
 
@@ -225,6 +261,7 @@ def main(sqlite_path, user_id, work_id):
         fwrite(f"ユーザ×工夫行列を保存しました")
         # 推薦を実施
         res_ps = recommend(us_table.T, user_id)
+        fwrite(f"res_ps:\n{res_ps}")
         if res_ps.shape[0] == 0:
             fwrite(f"user id {user_id} におすすめできる工夫が存在しません．")
             return None
@@ -232,7 +269,11 @@ def main(sqlite_path, user_id, work_id):
         return res_ps.to_dict()
 
     except Exception as e:
-        fwrite(e)
+        fwrite("error")
+        print(e.__class__.__name__) # ZeroDivisionError
+        print(e.args) # ('division by zero',)
+        print(e) # division by zero
+        print(f"{e.__class__.__name__}: {e}") # ZeroDivisionError: division by zero
 
 if __name__ == "__main__":
     print("Don't exec this program from command line")
