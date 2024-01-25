@@ -54,6 +54,16 @@
         </label>
         <p class="w-full text-sm p-2 text-gray-700">シミュレーション開始時点からすぐに推薦を受け取れるようにします．（シミュレーション初回時はこのオプションはチェックせず，二度目の実行時に「DBを初期化しない」にチェックして実行する場合に向いています）一度のシミュレーション実行で済ませたい かつ 指定日数経過後から推薦を実施したい場合はこのオプションは使わず「推薦開始日（経過日を指定）」を使ってください．</p>
       </div> 
+      <div class="flex flex-wrap items-center">
+        <label for="rec-model" class="text-sm font-bold mr-2">推薦モデル
+        </label>
+        <select name="rec-model" id="rec-model" class="bg-gray-50 font-bold border border-gray-300 text-blue-500 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2">
+          <option value="cf_mem_user">cf_mem_user</option>
+          <option value="cf_mem_user_2">cf_mem_user_2</option>
+        </select>
+        <!-- <input type="text" id="rec-model" name="replace" class="mt-4 outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="test_data_2020_01_01"> -->
+        <p class="w-full text-sm p-2 text-gray-700">※推薦有効時：推薦モデルを指定します．デフォルトは"cf_mem_user"です．<br>cf_mem_userは0,1の2値のユーザ工夫行列(採用有無のみ),cf_mem_user_2は工夫採用時の実施率を行列にしています．
+      </div>
     </div>
     <div id="input_options" class="flex flex-wrap [&>div]:w-1/3 ml-4 p-2 mt-2 [&_input]:block [&_input]:mb-1 [&>div]:border-b [&>div]:border-red-500">
       <div class="mb-2">
@@ -137,6 +147,8 @@
       if(inputs.backup.value != "") return `「指定した名前でバックアップ」「指定した名前のバックアップファイルを実行環境に復元する」の両方を一度に有効にしないでください．`;
       argStr = `${argStr} --replace ${inputs.replace.value}`;
     }
+    const recModel = document.getElementById("rec-model").selectedOptions[0].innerText;
+    argStr = `${argStr} --rec-model ${recModel}`;
     return {ok: argStr};
   }
 

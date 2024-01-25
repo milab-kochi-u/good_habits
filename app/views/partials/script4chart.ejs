@@ -142,10 +142,13 @@
   },0)
   const param_list = document.getElementById("sim_parameter");
   param_list.insertAdjacentHTML('beforeend', `<div><p>総合達成率</p>
-    <p>${(finished_tasks_total/task_total).toFixed(4)}</p></div>
-    <div><p>開始できた割合</p><p>${(started_tasks_total/task_total).toFixed(4)}</p></div>
-    <div><p>開始タスクの内，終了できた割合</p><p>${(finished_tasks_total/started_tasks_total).toFixed(4)}</p></div>
+    <p onclick="cpElm(this)">${(finished_tasks_total/task_total).toFixed(4)}</p></div>
+    <div><p>開始できた割合</p><p onclick="cpElm(this)">${(started_tasks_total/task_total).toFixed(4)}</p></div>
+    <div><p>開始タスクの内，終了できた割合</p><p onclick="cpElm(this)">${(finished_tasks_total/started_tasks_total).toFixed(4)}</p></div>
   `);
+  function cpElm(e){
+    navigator.clipboard.writeText(e.textContent);
+  }
   console.log('task total', task_total)
   console.log('started task total', started_tasks_total)
   console.log('finished task total', finished_tasks_total)

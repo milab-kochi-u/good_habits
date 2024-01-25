@@ -146,9 +146,9 @@ sim.changeMotivation = async function(user, {
 }
 
 // おすすめの工夫を取得する
-sim.getRecommendedScheme = async function(user,work){
+sim.getRecommendedScheme = async function(user,work,model){
   try{
-    const result = await recommend("db-dev.sqlite3", user.id, work.id);
+    const result = await recommend("db-dev.sqlite3", user.id, work.id,model);
     return result;
   }catch(e){
     throw e;

@@ -25,6 +25,9 @@ const { execSync,exec } = require('child_process');
     .option('recommendInTheMiddle',{
       type: 'number',
     })
+    .option('recModel',{
+      default: 'cf_mem_user',
+    })
     .version().alias('v', 'version')
     .help().alias('h', 'help')
     .example(`$0 --init 2020-01-01 --days 500`)
@@ -229,7 +232,7 @@ const { execSync,exec } = require('child_process');
               // 工夫を選び直す
               let selectedScheme = undefined;
               if(('recommendInTheMiddle' in argv && passedDays >= argv.recommendInTheMiddle) || 'doRecommend' in argv){
-                let selectedSchemes = await sim.getRecommendedScheme(user,addedWork);
+                let selectedSchemes = await sim.getRecommendedScheme(user,addedWork, argv.recModel);
                 if(selectedSchemes){
                   selectedSchemes = Object.entries(selectedSchemes).map(([key,value]) => ({key,value}));
                   selectedSchemes.sort((a,b) => b.value - a.value);

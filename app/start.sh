@@ -39,6 +39,8 @@ help(){
 	    後述の--rec-in-the-middleを使ってください
 	--rec-in-the-middle [integer]:
 	    指定した日数を経過したら推薦を受け取るように切り替えます
+	--rec-model [string]:
+	    推薦有効時:推薦モデルを指定します．デフォルトは"cf_mem_user"です
 	--data-gen:
 	    ダミーデータを再作成します．
 	--reload-db:
@@ -183,7 +185,17 @@ while [[ $# -gt 0 ]]; do
 					;;
 				*) 
 					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
-					DO_RECOMMEND="--recommendInTheMiddle $2" ; shift ; shift
+					DO_RECOMMEND="--recommendInTheMiddle $2 " ; shift ; shift
+			esac
+			;;
+		--rec-model)
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					DO_RECOMMEND="$DO_RECOMMEND --recModel $2 " ; shift ; shift
 			esac
 			;;
 		--replace)

@@ -91,7 +91,6 @@ def create_US_table(filename, work_id):
             FROM Tasks
             WHERE result IS NOT NULL
         """, conn)
-    fwrite(f"Tasks\n{Tasks}")
 
     # UsersWorks - UsersSchemes でINNER JOIN
     # UsersWork-UsersSchemes df without duplicates
@@ -180,8 +179,8 @@ def create_US_table(filename, work_id):
         推薦を受け取る対象ユーザの未採用工夫に対する予測評価付き配列
 """
 def recommend(matrix, user_id):
-    fwrite(f"matrix:\n{matrix.T}")
-    fwrite(f"user_id:{user_id}")
+    # fwrite(f"matrix:\n{matrix.T}")
+    # fwrite(f"user_id:{user_id}")
     # 推薦を受け取る対象ユーザの列を取得
     u_i = matrix[user_id]
     others = matrix.drop(columns=user_id)
@@ -201,7 +200,8 @@ def recommend(matrix, user_id):
 
     # 類似したユーザ集合を用意
     threshold = 0.05
-    sim_set = s_i_others[s_i_others >= threshold].sort_values(ascending=False)
+    # sim_set = s_i_others[s_i_others >= threshold].sort_values(ascending=False)
+    sim_set = s_i_others[s_i_others >= threshold]
     # _show = textwrap.indent(sim_set.to_string(), '        ')
     fwrite(f"類似度{threshold}を超えたユーザ集合");
     fwrite(f"\n(id, 類似度)\n{sim_set}");
@@ -213,21 +213,26 @@ def recommend(matrix, user_id):
     if sim_set.shape[0] == 0:
         return predict_values 
         
-    ser_score_avg = u_i[u_i != -1].mean()
+    user_score_avg = u_i[u_i != -1].mean()
     other_score_avg = others[sim_set.index]
-    other_score_avg = other_score_avg[other_score_avg != -1]
-    fwrite(f"others score avg {other_score_avg}")
+    other_score_avg = other_score_avg[other_score_avg != -1].mean()
+    fwrite(f"users score avg {user_score_avg}")
+    fwrite(f"others score avg\n{other_score_avg}")
     for index in u_i[u_i == -1].index:
 
         others_index_score = others[sim_set.index].loc[index]
+        others_index_score = others_index_score.where(others_index_score != 0, -0.01)
+        others_index_score = others_index_score.where(others_index_score != -1, 0)
 
-        # fwrite(f"otherのindexに対するスコア\n{others_index_score}")
-        # fwrite(f"otherのindexに対するスコア - otherのスコア平均(1)\n{others_index_score - 1}")
+        # fwrite(f"otherの{index}に対するスコア\n{others_index_score}")
+        # fwrite(f"otherの{index}に対するスコア置き換え後\n{others_index_score.where(others_index_score != -1.0, 0.0)}")
+        # fwrite(f"otherの{index}に対するスコア - otherのスコア平均(1)\n{others_index_score.where(others_index_score != -1, 0.0) - other_score_avg}")
         
         # 類似ユーザ集合othersの各類似度
         # と
-        # othersのindex(userが不採用の工夫)のスコアとothersのスコア平均との差
+        # othersのindex(userが不採用の工夫)のスコア(未採用==-1の場合は0に置き換え)とothersのスコア平均との差
         # の積
+        # dot = sim_set * (others_index_score.where(others_index_score != -1, 0.0) -other_score_avg)
         dot = sim_set * (others_index_score-other_score_avg)
         # fwrite(f"類似度との積\n{dot}")
         # fwrite(f"類似度との積の合計\n{dot.sum()}")
@@ -261,7 +266,6 @@ def main(sqlite_path, user_id, work_id):
         fwrite(f"ユーザ×工夫行列を保存しました")
         # 推薦を実施
         res_ps = recommend(us_table.T, user_id)
-        fwrite(f"res_ps:\n{res_ps}")
         if res_ps.shape[0] == 0:
             fwrite(f"user id {user_id} におすすめできる工夫が存在しません．")
             return None
@@ -269,7 +273,6 @@ def main(sqlite_path, user_id, work_id):
         return res_ps.to_dict()
 
     except Exception as e:
-        fwrite("error")
         print(e.__class__.__name__) # ZeroDivisionError
         print(e.args) # ('division by zero',)
         print(e) # division by zero
