@@ -254,7 +254,9 @@ def recommend(matrix, user_id):
         # wma = sum(others_index_score * weight) / sum(weight)
         # print(f"加重平均: {round(wma,3)}")
         # predict_values[index] = round(wma,3)
-    return predict_values.sort_values(ascending=False)
+    
+    return_values = predict_values[predict_values > 0]
+    return return_values.sort_values(ascending=False)
 
 def main(sqlite_path, user_id, work_id):
     try:
