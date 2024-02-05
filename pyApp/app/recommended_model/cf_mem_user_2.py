@@ -118,14 +118,22 @@ def create_US_table(filename, work_id):
             ・開始できた場合
             started_at
         '''
-        t_us = pd.merge(Tasks, UsersSchemes_d);
+        t_us = pd.merge(Tasks, UsersSchemes_d)
         # 開始できなかった場合のデータ
         start_fail_base = t_us[t_us['started_at'].isna()]
         start_fail1= start_fail_base[(start_fail_base['createdAt'] < start_fail_base['start_time']) & start_fail_base['deletedAt'].isna()]
-        start_fail2 = start_fail_base[start_fail_base['deletedAt'].notna() & (start_fail_base['createdAt'] < start_fail_base['start_time']) & (start_fail_base['start_time'] < start_fail_base['deletedAt'])]
+        s2 = start_fail_base[start_fail_base['deletedAt'].notna()]
+        if s2.shape[0] == 0:
+            start_fail2 = s2
+        else:
+            start_fail2 = start_fail_base[start_fail_base['deletedAt'].notna() & (start_fail_base['createdAt'] < start_fail_base['start_time']) & (start_fail_base['start_time'] < start_fail_base['deletedAt'])]
         start_success_base = t_us[t_us['started_at'].notna()]
         start_success1= start_success_base[(start_success_base['createdAt'] < start_success_base['started_at']) & start_success_base['deletedAt'].isna()]
-        start_success2 = start_success_base[start_success_base['deletedAt'].notna() & (start_success_base['createdAt'] < start_success_base['started_at']) & (start_success_base['started_at'] < start_success_base['deletedAt'])]
+        s2 = start_success_base[start_success_base['deletedAt'].notna()]
+        if s2.shape[0] == 0:
+            start_success2 = s2
+        else:
+            start_success2 = start_success_base[start_success_base['deletedAt'].notna() & (start_success_base['createdAt'] < start_success_base['started_at']) & (start_success_base['started_at'] < start_success_base['deletedAt'])]
         conc = pd.concat([start_fail1,start_fail2,start_success1,start_success2])
         return conc
         
@@ -203,8 +211,8 @@ def recommend(matrix, user_id):
     # sim_set = s_i_others[s_i_others >= threshold].sort_values(ascending=False)
     sim_set = s_i_others[s_i_others >= threshold]
     # _show = textwrap.indent(sim_set.to_string(), '        ')
-    fwrite(f"類似度{threshold}を超えたユーザ集合");
-    fwrite(f"\n(id, 類似度)\n{sim_set}");
+    fwrite(f"類似度{threshold}を超えたユーザ集合")
+    fwrite(f"\n(id, 類似度)\n{sim_set}")
 
     # 未採用の工夫に対して採用スコアを予測
 
@@ -264,7 +272,7 @@ def main(sqlite_path, user_id, work_id):
         us_table = create_US_table(sqlite_path, work_id)
         # 行列をcsvとして保存
         csv_string = us_table.to_csv()
-        fwrite(csv_string,stdout=False,add_date=True,header="csv",end="\n\n");
+        fwrite(csv_string,stdout=False,add_date=True,header="csv",end="\n\n")
         fwrite(f"ユーザ×工夫行列を保存しました")
         # 推薦を実施
         res_ps = recommend(us_table.T, user_id)
