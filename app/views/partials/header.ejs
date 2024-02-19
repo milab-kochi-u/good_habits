@@ -39,7 +39,9 @@
       </div>
     </div>
     <nav class="md:ml-auto flex items-center text-xl justify-center text-center">
-      <a class="mr-2 my-4 p-2 py-8 text-blue-400 hover:text-blue-300 underline" href="/users">Users Dashboard</a>
+      <% if(typeof link.user !== 'undefined') { %>
+        <a class="mr-2 my-4 p-2 py-8 text-blue-400 hover:text-blue-300 underline" href="/users">Users Dashboard</a>
+      <% } %>
     </nav>
   </div>
   <script>

@@ -103,6 +103,9 @@ exec_simulation(){
 
 # バックアップファイルの生成
 backup_files(){
+	if [ ! -d ./backups ]; then
+	  mkdir ./backups
+	fi
 	cp "./dummydata.json" "./backups/$1.json"
 	cp "./db-dev.sqlite3" "./backups/$1.sqlite3"
 	cp "./sim_result.log" "./backups/$1.log"

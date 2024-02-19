@@ -6,14 +6,21 @@ const dayjs = require('dayjs');
 /* GET home page. */
 router.get('/', async function(req, res, next) {
   
-  const sim_log = await models.SimulationLog.findOne({
-    order: [ ['updatedAt', 'DESC']],
-  });
+  let sim_log = undefined
+  let user_link = undefined
+  try{
+    sim_log = await models.SimulationLog.findOne({
+      order: [ ['updatedAt', 'DESC']],
+    });
+    user_link = '/users'
+  }catch(err){
+    console.log(`error: SimulationLogテーブルが存在しません`)
+  }
   res.render('index', {
     title: 'Express',
     link: {
       parent: "/",
-      user: "/users"
+      user:user_link 
     },
     logs: JSON.stringify(sim_log),
   });
