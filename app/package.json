@@ -4,12 +4,11 @@
   "private": true,
   "scripts": {
     "start:prod": "node ./bin/www",
-    "start:dev": "nodemon -e env,ejs,js,json -w . -w .env ./bin/www",
-    "start:sync": "browser-sync start --config bs-config.js",
+    "start:dev": "nodemon -e env,ejs,js,json --ignore dummydata.json -w './'  -w '/tmp/.env' ./bin/www",
     "css": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css",
     "css-dev": "postcss public/stylesheets/tailwind.css -o public/stylesheets/style.css -w",
     "start": "npm-run-all --parallel start:prod css",
-    "start-dev": "npm-run-all --parallel start:dev start:sync css-dev"
+    "start-dev": "npm-run-all --parallel start:dev css-dev"
   },
   "dependencies": {
     "autoprefixer": "^10.4.13",
@@ -35,7 +34,6 @@
     "yargs": "^17.5.1"
   },
   "devDependencies": {
-    "browser-sync": "^2.27.11",
     "nodemon": "^1.3.3",
     "npm-run-all": "^4.1.5"
   }

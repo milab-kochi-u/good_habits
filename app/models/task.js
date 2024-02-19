@@ -46,6 +46,11 @@ module.exports = (sequelize, DataTypes) => {
     this.result = 1;
     await this.save();
   }
+  // タスクの失敗
+  Task.prototype.failed = async function(){
+    this.result = 0;
+    await this.save();
+  }
   // TODO: 「今日はやらない」or「今日はできなかった」ボタンを押すことでresult=0
   // TODO: ↑のボタンを押した時間もどれかのカラムに記録できないか？
   /* 

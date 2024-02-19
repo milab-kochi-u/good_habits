@@ -119,7 +119,7 @@ Recommendation process : Numpy, Pandas
 sqlite3ファイルと推薦を受け取りたいユーザ，ワークを指定するとおすすめの工夫を返すWebAPIとして機能します。
 シミュレーション機能 & Webビューア立ち上げ時の `docker compose up` 実行時に既に組み込まれています。  
 
-コンテナ間通信で `app/simulate.js` とやり取りしますが，ローカルで試したい場合は `localhost:8888` にアクセスすると応答します。
+コンテナ間通信で `app/simulation/simulate.js` とやり取りしますが，ローカルで試したい場合は `localhost:8888` にアクセスすると応答します。
 
 例：
 ```bash

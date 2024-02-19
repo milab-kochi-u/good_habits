@@ -1,6 +1,7 @@
 // 初期値
-const mathlib = require('./util/mathlib.js');
+const mathlib = require('../util/mathlib.js');
 const yargs = require('yargs');
+const fs = require('fs');
 
 const argv = yargs
 	.option('users', {
@@ -17,7 +18,7 @@ const argv = yargs
 const rangeOfInitialMotivation = [30, 80];	// 動機の高さ (0〜1) の初期値の範囲（×100）（30 → 実際は 0.3）
 const rangeOfThresholdOfWorkChanging = [0, 5];	// ワークを変更する閾値の範囲（×100）（30 → 実際は 0.3）
 // const rangeOfThresholdOfSchemeChanging = [0, 20];	// 工夫を変更する閾値の範囲（×100）（30 → 実際は 0.3）
-const rangeOfCycleDays = [-10,10];	// 波長の周期の日数の範囲
+const rangeOfCycleDays = [-15,15];	// 波長の周期の日数の範囲
 // const rangeOfCycleHours = { 'user': [0, 8], 'work': [8, 16], 'scheme': [16, 24] };	// 24時間を3等分
 
 // TODO:乱数の出力は整数であり，日数単位として扱っているので，今後時間単位の乱数として扱いたい
@@ -29,14 +30,7 @@ const numberOfSchemes = 100;
 const possibilityOfMultiCategory = 0.3;	// 複数のカテゴリにまたがる可能性
 const numberOfSignificantDigits = 2	// 有効桁数（乱数などの実数値の小数点以下の桁数が長くなりすぎるため）
 // const numberOfDaysForExperiment = 365 * 0.5;	// 実験期間の日数
-const candidatesOfIntervalDaysForSelfReflection = [7, 14, 30];	// 振り返りを行う日数の候補
-
-// a, b の day 日めの相性を調べる（相性度: 0〜1, 大きいほど相性が良い）
-// function checkChemistry(a, b, day) {
-// 	const aPhase = Math.sin(Math.PI * 2 * (day * 24 - a['initialPhase']) / a['waveLength']);
-// 	const bPhase = Math.sin(Math.PI * 2 * (day * 24 - b['initialPhase']) / b['waveLength']);
-// 	return 1.0 - Math.abs(aPhase - bPhase) / 2;
-// }
+const candidatesOfIntervalDaysForSelfReflection = [3, 6, 9, 12, 15, 18, 21, 24, 27, 30];	// 振り返りを行う日数の候補
 
 // 各カテゴリの優先度を決める（優先度: 0〜1, 大きいほど優先権が高い，相性度と乗算して利用する）
 function decidePriorityOfCategories() {
@@ -143,7 +137,6 @@ for (let i = 0; i < numberOfUsers; i++) {
 
 	let featureOfComplete = mathlib.adjust(mathlib.round(mathlib.rnorm(0.2,0.5)));
 
-	// TODO: これを正規分布に合わせる
 	const user = {
 		'name': 'user' + num,
 		'waveLength': waveLength,
@@ -168,4 +161,4 @@ const dummydata = {
 	'users': users,
 };
 // console.log(dummydata);
-console.log(JSON.stringify(dummydata));
+fs.writeFileSync("dummydata.json", JSON.stringify(dummydata));

@@ -8,61 +8,302 @@
       <script>
         const last_sim_d = document.getElementById('last_simulation_run_time');
         const sim_duration = document.getElementById('simulating_date');
-        const datemsg = "<%= logs.updatedAt %>";
-        const dduration = ["<%= logs.startedAt %>", "<%= logs.finishedAt %>"];
-        last_sim_d.innerHTML = dayjs(datemsg).format('YYYY/MM/DD HH:mm:ss Z');
-        sim_duration.innerHTML = `${dayjs(dduration[0]).format('YYYY/MM/DD HH:mm:ss Z')}  ~ ${dayjs(dduration[1]).format('YYYY/MM/DD HH:mm:ss Z')}`;
+        const logs = JSON.parse('<%- logs %>');
+        const datemsg = (logs) ? dayjs(logs.updatedAt).format('YYYY/MM/DD HH:mm:ss Z') : "null";
+        const dduration = (logs) ? [logs.startedAt, logs.finishedAt] : "null";
+        last_sim_d.innerHTML = datemsg;
+        if(dduration != "null"){
+          sim_duration.innerHTML = `${dayjs(dduration[0]).format('YYYY/MM/DD HH:mm:ss Z')}  ~ ${dayjs(dduration[1]).format('YYYY/MM/DD HH:mm:ss Z')}`;
+        }else{
+          sim_duration.innerHTML = "null";
+        }
       </script>
     </ul>
   </div>
 
   <div class="mt-10 text-xl font-bold">シミュレーション設定</div>
-  <form class="my-6 w-full max-w-sm">
-    <div class="flex mb-4 items-center border-b border-teal-500 py-2">
-      <input id="createProfile" type="checkbox" name="createProfile" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
-      <label for="createProfile" class="ml-2 text-sm font-medium text-gray-900">プロファイルを作成</label>
-    </div>
-    <div class="flex items-center border-b border-teal-500 py-2">
-      <input checked id="simulate" type="checkbox" name="execSimulation" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
-      <label for="simulate" class="ml-2 text-sm font-medium text-gray-900">シミュレーションを実行</label>
-    </div>
-    <div id="settings" class="ml-4 p-2 mt-2">
-      <div class="blcok">
-        <label for="days" class="text-sm mr-2">日数</label>
-        <input type="text" id="days" name="days" class="outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" value="10" required>
+  <form id="simulation_settings" class="my-6 w-fit">
+    <div id="flag_options" class="flex flex-wrap [&>div]:w-1/3 mb-4 [&>div]:border-b [&>div]:border-teal-500 py-2 [&>div]:p-2">
+      <div class="flex flex-wrap items-center">
+        <input id="data-gen" type="checkbox" name="data-gen" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+        <label for="data-gen" class="ml-2 text-sm font-medium text-gray-900">dummydata.jsonを再作成
+        </label>
+        <p class="w-full text-sm p-2 text-gray-700">ダミーデータを再作成します．</p>
       </div>
-      <div class="blcok my-2">
-        <label for="period" class="text-sm mr-2">期間</label>
-        <input type="date" id="period" name="period" class="outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" value="2020-01-01" required>
+      <div class="flex flex-wrap items-center">
+        <input id="reload-db" type="checkbox" name="reload-db" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+        <label for="reload-db" class="ml-2 text-sm font-medium text-gray-900">dbを再読み込み
+        </label>
+        <p class="w-full text-sm p-2 text-gray-700">/dummydata.json に記載の内容を /db-dev.sqlite3に読み込みます．(既存のDBデータは削除されます) これにチェックする場合，「DBを初期化しない」にチェックしないでください．</p>
+      </div>
+      <div class="flex flex-wrap items-center">
+        <input id="no-sim" type="checkbox" name="execSimulation" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+        <label for="no-sim" class="ml-2 text-sm font-medium text-gray-900">シミュレーションを実行しない
+        </label>
+        <p class="w-full text-sm p-2 text-gray-700">シミュレーションを実行しません．</p>
+      </div> 
+      <div class="flex flex-wrap items-center">
+        <input id="no-init" type="checkbox" name="execSimulation" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+        <label for="no-init" class="ml-2 text-sm font-medium text-gray-900">DBを初期化しない
+        </label>
+        <p class="w-full text-sm p-2 text-gray-700">シミュレーション時にinitオプションを使用しません（前回のデータを継続します）これにチェックする場合，「dbを再読み込み」にチェックしないでください.</p>
+      </div> 
+      <div class="flex flex-wrap items-center">
+        <input id="do-recommend" type="checkbox" name="execSimulation" value="on" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
+        <label for="do-recommend" class="ml-2 text-sm font-medium text-gray-900">推薦を実施する
+        </label>
+        <p class="w-full text-sm p-2 text-gray-700">シミュレーション開始時点からすぐに推薦を受け取れるようにします．（シミュレーション初回時はこのオプションはチェックせず，二度目の実行時に「DBを初期化しない」にチェックして実行する場合に向いています）一度のシミュレーション実行で済ませたい かつ 指定日数経過後から推薦を実施したい場合はこのオプションは使わず「推薦開始日（経過日を指定）」を使ってください．</p>
+      </div> 
+      <div class="flex flex-wrap items-center">
+        <label for="rec-model" class="text-sm font-bold mr-2">推薦モデル
+        </label>
+        <select name="rec-model" id="rec-model" class="bg-gray-50 font-bold border border-gray-300 text-blue-500 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2">
+          <option value="cf_mem_user">cf_mem_user</option>
+          <option value="cf_mem_user_2">cf_mem_user_2</option>
+        </select>
+        <!-- <input type="text" id="rec-model" name="replace" class="mt-4 outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="test_data_2020_01_01"> -->
+        <p class="w-full text-sm p-2 text-gray-700">※推薦有効時：推薦モデルを指定します．デフォルトは"cf_mem_user"です．<br>cf_mem_userは0,1の2値のユーザ工夫行列(採用有無のみ),cf_mem_user_2は工夫採用時の実施率を行列にしています．
+      </div>
+    </div>
+    <div id="input_options" class="flex flex-wrap [&>div]:w-1/3 ml-4 p-2 mt-2 [&_input]:block [&_input]:mb-1 [&>div]:border-b [&>div]:border-red-500">
+      <div class="mb-2">
+        <label for="days" class="text-sm font-bold mr-2">日数
+          <span class="ml-2 m-1 p-1 rounded bg-green-600 text-white font-bold">デフォルト値: 10</span>
+        </label>
+        <input type="number" id="days" name="days" class="mt-4 outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="10">
+        <p class="w-full text-sm p-2 text-gray-700">シミュレーションの期間を設定してください．</p>
+      </div>
+      <div class="mb-2">
+        <label for="init" class="text-sm font-bold mr-2">開始日
+          <span class="ml-2 m-1 p-1 rounded bg-green-600 text-white font-bold">デフォルト値: 2020-01-01</span>
+        </label>
+        <input type="date" id="init" name="period" class="mt-4 outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5">
+        <p class="w-full text-sm p-2 text-gray-700">日付形式を指定し，その日付からシミュレーションを開始します．</p>
+      </div>
+      <div class="mb-2">
+        <label for="users" class="text-sm font-bold mr-2">ユーザ数
+          <span class="ml-2 m-1 p-1 rounded bg-green-600 text-white font-bold">デフォルト値: 20</span>
+        </label>
+        <input type="number" id="users" name="users" class="mt-4 outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="20">
+        <p class="w-full text-sm p-2 text-gray-700">ダミーデータ生成時のユーザ数を指定します．</p>
+      </div>
+      <div class="mb-2">
+        <label for="rec-in-the-middle" class="text-sm font-bold mr-2">推薦開始日（経過日を指定）
+        </label>
+        <input type="number" id="rec-in-the-middle" name="rec-in-the-middle" class="mt-4 outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="10">
+        <p class="w-full text-sm p-2 text-gray-700">指定した日数を経過したら推薦を受け取るように切り替えます</p>
+      </div>
+      <div class="mb-2">
+        <label for="backup" class="text-sm font-bold mr-2">指定した名前でバックアップ
+        </label>
+        <input type="text" id="backup" name="backup" class="mt-4 outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="test_data_2020_01_01">
+        <p class="w-full text-sm p-2 text-gray-700">※このオプションはダミーデータの生成やシミュレーションの後に実施されます．<br>dummydata.json, db-dev.sqlite3, sim_result.logのコピーファイルをそれぞれ /backups/[fileName].json, /backups/[fileName].sqlite3, /backups/[fileName].log に保存します．拡張子は記述しないで下さい．</p>
+      </div>
+      <div class="mb-2">
+        <label for="replace" class="text-sm font-bold mr-2">指定した名前のバックアップファイルを実行環境に復元する
+        </label>
+        <input type="text" id="replace" name="replace" class="mt-4 outline-0 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5" placeholder="test_data_2020_01_01">
+        <p class="w-full text-sm p-2 text-gray-700">※このオプションを使用した場合ダミーデータの生成とシミュレーションは実施されません．<br>指定したファイル名に該当するバックアップファイル（fileName.json, fileName.sqlite3, fileName.log）をそれぞれ /dummydata.json, /db-deb.sqlite3, /sim_result.logに展開します．拡張子は記述しないで下さい．</p>
       </div>
     </div>
     <div class="blcok mt-4 h-12">
       <button type='button' id="exec" class="back_btn1">実行</button>
     </div>
+    <div id="modal" class="fixed w-full h-full top-0 left-0 text-center bg-blue-300/[.5] p-10 hidden">
+      <div id="result" class="m-4 p-2 bg-white"></div>
+    </div>
   </form>
 </div>
 
 <script>
-  const settings = document.getElementById('settings');
-  let elm = document.getElementById('simulate');
-  elm.addEventListener('change', valueChange);
-  function valueChange(){
-    console.log(elm.checked);
-    if(elm.checked){
-      settings.style.display = "block";
-    }else{
-      settings.style.display = "none";
+  function validAndCreateSendData(){
+    const queryStr = "#simulation_settings input#";
+    const queryElms = ["data-gen", "reload-db", "no-sim", "no-init", "do-recommend", "days", "init", "users", "rec-in-the-middle", "backup", "replace"];
+    const inputs = {};
+    queryElms.map(e=>{return e.split("-").join("_")}).forEach((elm)=>{
+      inputs[elm] = 0;
+    });
+    Object.keys(inputs).forEach((var_name)=>{
+      inputs[var_name] = document.querySelector(`${queryStr}${var_name.split("_").join("-")}`);
+    });
+    let argStr = "";
+    if(inputs.data_gen.checked) argStr = ` --data-gen`;
+    if(inputs.reload_db.checked) argStr = `${argStr} --reload-db`;
+    if(inputs.no_sim.checked) argStr = `${argStr} --no-sim`;
+    if(inputs.no_init.checked){
+      if(inputs.reload_db.checked) return `「DBを初期化しない」「DBを再読み込み」の両方にチェックが入っています．`;
+      argStr = `${argStr} --no-init`;
+    }
+    if(inputs.do_recommend.checked) argStr = `${argStr} --do-recommend`;
+    if(inputs.days.value != "") argStr = `${argStr} -D ${inputs.days.value}`;
+    if(inputs.init.value != "") argStr = `${argStr} -i ${inputs.init.value}`;
+    if(inputs.users.value != "") argStr = `${argStr} --users ${inputs.users.value}`;
+    if(inputs.rec_in_the_middle.value != ""){
+      if(inputs.do_recommend.checked) return `「推薦を実施する」「推薦開始日（経過日を指定）」が両方とも有効になっています．`;
+      argStr = `${argStr} --rec-in-the-middle ${inputs.rec_in_the_middle.value}`;
+    }
+    if(inputs.backup.value != "") argStr = `${argStr} --backup ${inputs.backup.value}`;
+    if(inputs.replace.value != ""){
+      if(inputs.backup.value != "") return `「指定した名前でバックアップ」「指定した名前のバックアップファイルを実行環境に復元する」の両方を一度に有効にしないでください．`;
+      argStr = `${argStr} --replace ${inputs.replace.value}`;
+    }
+    const recModel = document.getElementById("rec-model").selectedOptions[0].innerText;
+    argStr = `${argStr} --rec-model ${recModel}`;
+    return {ok: argStr};
+  }
+
+  let forms = document.querySelectorAll("#simulation_settings input");
+
+  function isModalOpen(){
+    const modalWindow = document.getElementById("modal");
+    return (!modalWindow.classList.contains("hidden"));
+  }
+  function openModal(){
+    const modalWindow = document.getElementById("modal");
+    if(modalWindow.classList.contains("hidden")){
+      modalWindow.classList.remove("hidden");
+    }
+  }
+  function closeModal(){
+    const modalWindow = document.getElementById("modal");
+    if(!modalWindow.classList.contains("hidden")){
+      modalWindow.classList.add("hidden");
     }
   }
 
-  
-  function getFormElms(){return {
-    createProfile: document.getElementById('createProfile').value,
-    simulate: document.getElementById('simulate').value,
-    days: document.getElementById('days').value,
-    period: document.getElementById('period').value
-  }}
-  // console.log(formElms);
+  async function execSim(running_check = false){
+    const url = "/api/simulate";
+    if(running_check){
+      try{
+        const req_res = await axios(url,{
+          method: 'post',
+          data: {query: "./start.sh -h"},
+          timeout: 300,
+        });
+        return false;
+      }catch(error){
+        if(error.response) return true;
+        else{
+          console.log(error);
+          return true;
+        }
+      }
+    }
+    const isRunning = async()=>{
+      const result = await execSim(true);
+      console.log(result);
+      return result;
+    };
+
+    const exec_elm = document.querySelector("div#result");
+    const result = validAndCreateSendData();
+    const closeBtnElm = `
+      <button type="button" class="back_btn1 mt-4" onclick="closeModal()">
+        閉じる
+      </button>
+    `;
+    const headElm = `<hr class="h-px my-4 bg-black border-0">`;
+    const divElm = ['<div class="">', '</div>'];
+    const pElm = ['<p class="">', '</p>'];
+
+    // header部分のDBがデフォルト以外なら処理しない
+    const dbIsDefault = document.getElementById("sqlite-default").checked;
+    if(!dbIsDefault){
+      exec_elm.innerHTML = `
+        <p class="text-red-500 text-xl font-bold">DBを「Default DB」にして下さい</p>
+        <br>
+        ${closeBtnElm}
+      `;
+      return;
+    }
+
+    if(Object.keys(result).indexOf('ok') !== -1){
+      exec_elm.innerHTML = `
+        <p>シミュレーションサーバで以下を実行します．</p>
+        <br>
+        <p class="font-bold bg-gray-300/[.8] rounded m-1 p-4 inline-block">
+          ./start.sh${result.ok}
+        </p>`;
+      try{
+        if(await isRunning()){
+          exec_elm.innerHTML = `${divElm[0]}${pElm[0]}既に実行中でした．時間をおいて再実行してください．${pElm[1]}${closeBtnElm}${divElm[1]}`;
+          return;
+        }
+        const req_res = await axios(url, {
+          method: 'post',
+          data: {query: `./start.sh${result.ok}`},
+          timeout: 300,
+        });
+        // レスポンスを300ms以内に受信（通常発生しないが， ./start.sh --data-gen --no-sim とかなら発生する）
+        exec_elm.insertAdjacentHTML("beforeend", `
+          ${headElm}${divElm[0]}
+          ${pElm[0]}
+            処理が終了しました．
+          ${pElm[1]}${closeBtnElm}${divElm[1]}
+        `);
+      }catch(error){
+        if(error.response){
+          // 既に実行中（これも発生しないはず）
+          console.log("duplicate error");
+          exec_elm.insertAdjacentHTML("beforeend", `
+            ${headElm}${divElm[0]}${pElm[0]}既に実行中でした．時間をおいて再実行してください．${pElm[1]}${closeBtnElm}${divElm[1]}
+          `);
+        }else{
+          // timeoutにより中止
+          // = 正常に処理開始
+          console.log("timeout error");
+          const loadingGif = `<div class="w-full text-center"><img class="m-2 p-1 inline" src="img/loading-l-3.gif"></div>`;
+          exec_elm.insertAdjacentHTML("beforeend", `
+            ${headElm}${divElm[0]}${closeBtnElm}${loadingGif}${pElm[0]}
+              処理を開始しています．完了するまでページ遷移(リロードや戻る，進む，リンククリック)はしないでください．<br>
+              (ページ遷移やリンククリックによりDBへの再接続が発生しエラーが起こるため）<br>
+              閉じるボタンを押してモーダルを閉じることができますがページ遷移は行わないでください．<br>
+            ${pElm[1]}${divElm[1]}${headElm}
+            <div id="show_sim_status"></div>
+          `);
+          const status = document.getElementById("show_sim_status");
+          status.innerHTML = "";
+          const isSimulating = (result.ok.indexOf("--no-sim") > -1) ? false : true;
+          let cnt = [0, ""];
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+          while(await isRunning()){
+            if(isSimulating){
+              let logtail;
+              try{
+                logtail = (await axios.get(`${url}/getResultsTail`)).data;
+              }catch(err){
+                // nodemonによりサーバのリロードがあるが気にせずリクエストを送り続けろ
+                continue;
+              }
+              if(cnt[0] == 0) cnt[1] = logtail;
+              if(cnt[1] != logtail) status.innerHTML = `<p class="font-bold">シミュレーションの進捗</p><p class="p-1 animate-text-pop-up-top">${logtail}</p>`;
+              cnt[0] += 1;
+              cnt[1] = logtail;
+            }else{
+              status.innerHTML = `しばらくお待ちください`;
+            }
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            if(!isModalOpen()) return;
+          }
+          const img = document.querySelector("#result img");
+          img.classList.add("hidden");
+          status.insertAdjacentHTML("beforeend", `<br>処理が完了しました．`);
+        }
+      }
+    }else{
+      exec_elm.innerHTML = `
+        ${divElm[0]}
+        <p class="text-red-500 font-bold">${result}</p>
+        ${closeBtnElm}
+        ${divElm[1]}
+      `;
+    }
+  }
+  const exec_btn = document.getElementById("exec");
+  exec_btn.onclick = async ()=>{
+    openModal();
+    await execSim();
+  };
 </script>
 
 <%- include('partials/footer'); %>

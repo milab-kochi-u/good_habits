@@ -1,4 +1,4 @@
-const models = require('./models/index.js');
+const models = require('../models/index.js');
 const yargs = require('yargs');
 const fs = require('fs').promises;
 

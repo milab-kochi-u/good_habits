@@ -12,9 +12,9 @@ help(){
 	ヘルプ）こんにちは
 		本スクリプトは三好研究室の「習慣化支援システム」のシミュレーションプログラムです．
 	本コマンドにより
-	・ダミーデータの生成(default: 実施しない)
-	・express(DB)にダミーデータの読込(default: 実施しない)
-	・シミュレーションの実施(default: 実施する)
+	・ダミーデータの生成 (default: 実施しない)
+	・express(DB)にダミーデータの読込 (default: 実施しない)
+	・シミュレーションの実施 (default: 実施する)
 	が実行できます．
 	オプション省略時のコマンド引数: start.sh -i 2020-01-01 -D 10
 	使い方：
@@ -33,20 +33,28 @@ help(){
 	    '--reload-db'オプションを使わないでください．
 	--do-recommend:
 	    シミュレーション時に推薦を実施します
+	    (初回実行時は当オプションを付けず，二度目の実行時に
+	    --no-initを付けて実行するのが良いです)
+	    一度のシミュレーションで推薦も実施したい場合，
+	    後述の--rec-in-the-middleを使ってください
+	--rec-in-the-middle [integer]:
+	    指定した日数を経過したら推薦を受け取るように切り替えます
+	--rec-model [string]:
+	    推薦有効時:推薦モデルを指定します．デフォルトは"cf_mem_user"です
 	--data-gen:
 	    ダミーデータを再作成します．
 	--reload-db:
 	    ./dummydata.json に記載の内容を./db-dev.sqlite3 に読み込みます．(DB既存データは削除されます)
 	--backup [fileName]:
-	    ※ このオプションは他のオプションより優先して実行されます．
-	    コマンド実行時点でのdummydata.jsonとdb-dev.sqlite3のコピーファイルを以下のように保存します．
-	    ./backups/fileName.json, ./backups/fileName.sqlite3
+	    ※ このオプションはダミーデータの生成やシミュレーションの後に実施されます.
+	    dummydata.jsonとdb-dev.sqlite3,コマンド出力結果sim_result.logのコピーファイルを以下のパスに保存します．
+	    ./backups/fileName.json, ./backups/fileName.sqlite3, ./backups/fileName.log
 	    拡張子は記述しないでください．
 	--replace [fileName]:
 	    ※ このオプションを使用した場合ダミーデータの生成とシミュレーションは実施されません．
 	    引数に入力したファイル名に該当する
-	    fileName.json, fileName.sqlite3ファイルを
-	    ./dummydata.json, ./db-dev.sqlite3　に上書きします．
+	    fileName.json, fileName.sqlite3, fileName.logを,
+	    ./dummydata.json, ./db-dev.sqlite3, ./sim_result.logに上書きします．
 	    拡張子は記述しないでください．
 	EOS
 	exit 0
@@ -75,37 +83,42 @@ dateinit(){
 
 # ダミーデータの生成
 generate_dummydata(){
-	node generate_dummydata.js ${ARGS_GENERATEDATA} > dummydata.json
+	node simulation/generate_dummydata.js ${ARGS_GENERATEDATA}
 }
 
 # ダミーデータを読み込む
 read_dummydata(){
-	node import_dummydata.js dummydata.json
+	node simulation/import_dummydata.js dummydata.json
 }
 
 # シミュレーションの実行
 exec_simulation(){
 	# -- 過去のシミュレーション結果を削除し，2020年1月1日から指定日間のシミュレーションを行う
 	if [ ${NO_INIT} = "YES" ];then
-		node simulate.js -d "${SETDAYS}" ${DO_RECOMMEND}
+		node simulation/simulate.js -d "${SETDAYS}" ${DO_RECOMMEND} --pid0 $PPID --pid1 $$
 	else
-		node simulate.js --init "${SETDATE}" -d "${SETDAYS}" ${DO_RECOMMEND}
+		node simulation/simulate.js --init "${SETDATE}" -d "${SETDAYS}" ${DO_RECOMMEND} --pid0 $PPID --pid1 $$
 	fi
 }
 
 # バックアップファイルの生成
 backup_files(){
+	if [ ! -d ./backups ]; then
+	  mkdir ./backups
+	fi
 	cp "./dummydata.json" "./backups/$1.json"
 	cp "./db-dev.sqlite3" "./backups/$1.sqlite3"
+	cp "./sim_result.log" "./backups/$1.log"
 }
 
 # バックアップファイルの適用
 replace_files(){
-	if [ -f "./backups/$1.json" ] && [ -f "./backups/$1.sqlite3" ]; then
+	if [ -f "./backups/$1.json" ] && [ -f "./backups/$1.sqlite3" ] && [ -f "./backups/$1.log" ]; then
 		cp "./backups/$1.json" "./dummydata.json"
 		cp "./backups/$1.sqlite3" "./db-dev.sqlite3"
+		cp "./backups/$1.log" "./sim_result.log"
 	else
-		echo "[ERROR] $1.json または $1.sqlite3 が存在しません．"
+		echo "[ERROR] $1.json または $1.sqlite3 または $1.log が存在しません．"
 		exit 1
 	fi
 }
@@ -117,6 +130,7 @@ SETDAYS="10"
 ARGS_GENERATEDATA=""
 FLAG_GENERATEDATA="NO"
 NO_INIT="NO"
+BACKUP="NO"
 DO_RECOMMEND=""
 FLAG_READDATA="NO"
 FLAG_SIMULATE="YES"
@@ -164,7 +178,27 @@ while [[ $# -gt 0 ]]; do
 					;;
 				*) 
 					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
-					backup_files $2 ; shift ; shift
+					BACKUP=$2 ; shift ; shift
+			esac
+			;;
+		--rec-in-the-middle)
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					DO_RECOMMEND="--recommendInTheMiddle $2 " ; shift ; shift
+			esac
+			;;
+		--rec-model)
+			case $2 in
+				-*)
+					echo "[ERROR] Invalid parameter." ; exit 1
+					;;
+				*) 
+					if [[ -z $2 ]] ; then echo "[ERROR] $1 must have parameter." ; exit 1 ; fi
+					DO_RECOMMEND="$DO_RECOMMEND --recModel $2 " ; shift ; shift
 			esac
 			;;
 		--replace)
@@ -186,7 +220,10 @@ while [[ $# -gt 0 ]]; do
 			NO_INIT="YES" ; shift
 			;;
 		--do-recommend)
-			DO_RECOMMEND="--doRecommend" ; shift
+			if [ -z "$DO_RECOMMEND" ] ; then
+				DO_RECOMMEND="--doRecommend"
+			fi
+			shift
 			;;
 		--data-gen)
 			FLAG_GENERATEDATA="YES" ; shift
@@ -234,5 +271,6 @@ export FAKETIME_NO_CACHE=1
 if [[ $FLAG_GENERATEDATA = "YES" ]]; then generate_dummydata ; fi
 if [[ $FLAG_READDATA = "YES" ]]; then read_dummydata ; fi
 if [[ $FLAG_SIMULATE = "YES" ]]; then exec_simulation ; fi
+if [[ $BACKUP != "NO" ]]; then backup_files $BACKUP; fi
 
 exit 0

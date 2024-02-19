@@ -19,6 +19,18 @@ def create_US_table(filename, work_id):
     conn = sqlite3.connect(dbname)
     cur = conn.cursor()
 
+    def record_timestamp():
+        data = pd.read_sql(
+            f"""
+                SELECT createdAt, updatedAt
+                FROM SimulationLogs
+                ORDER BY updatedAt DESC
+                LIMIT 1
+            """,conn)
+        fwrite(f"DB createdAt: {data.iloc[-1,0]}, DB updatedAt: {data.iloc[-1,1]}")
+        
+    record_timestamp()
+
     # 各ユーザごとに処理をループ
     # Users df (without duplicates)
     Users = pd.read_sql(
@@ -116,24 +128,50 @@ def recommend(matrix, user_id):
     threshold = 0.05
     sim_set = s_i_others[s_i_others >= threshold].sort_values(ascending=False)
     # _show = textwrap.indent(sim_set.to_string(), '        ')
-    # fwrite(f"similar user set(user id, similarity):\n{_show}\n", end="")
+    fwrite(f"類似度{threshold}を超えたユーザ集合");
+    fwrite(f"\n(id, 類似度)\n{sim_set}");
 
     # 未採用の工夫に対して採用スコアを予測
-    # 予測方法は平均による閾値処理（オリジナル）
+
+
+    # 既存手法でやってみる
     predict_values = pd.Series(name="Predicted effect of schemes")
     if sim_set.shape[0] == 0:
         return predict_values 
     for index in u_i[u_i == 0].index:
-        # print(f"index:{index}")
+        user_score_avg = 1
+        other_score_avg = 1
+
         others_index_score = others[sim_set.index].loc[index]
+
+        # fwrite(f"otherのindexに対するスコア\n{others_index_score}")
+        # fwrite(f"otherのindexに対するスコア - otherのスコア平均(1)\n{others_index_score - 1}")
+        
+        # 類似ユーザ集合othersの各類似度
+        # と
+        # othersのindex(userが不採用の工夫)のスコアとothersのスコア平均との差
+        # の積
+        dot = sim_set * (others_index_score-other_score_avg)
+        # fwrite(f"類似度との積\n{dot}")
+        # fwrite(f"類似度との積の合計\n{dot.sum()}")
+        # fwrite(f"othersの類似度合計\n{sim_set.sum()}")
+        # fwrite(f"予測スコア\n{(1+(dot.sum()/sim_set.sum()))}")
+
+        # 予測スコア
+        pv = user_score_avg + (dot.sum() / sim_set.sum())
+        predict_values[index] = round(pv, 3)
+
+        fwrite(f"{index}に対する予測スコア: {round(pv,3)}")
+
+        # 平均による閾値処理（オリジナル）も考えてみた（不採用）
         # 単純平均
-        mean = others_index_score.mean()
+        # mean = others_index_score.mean()
         # print(f"単純平均: {round(mean,3)}")
         # 加重平均
-        weight = np.arange(others_index_score.shape[0],0,-1)
-        wma = sum(others_index_score * weight) / sum(weight)
+        # weight = np.arange(others_index_score.shape[0],0,-1)
+        # wma = sum(others_index_score * weight) / sum(weight)
         # print(f"加重平均: {round(wma,3)}")
-        predict_values[index] = round(wma,3)
+        # predict_values[index] = round(wma,3)
     return predict_values.sort_values(ascending=False)
 
 def main(sqlite_path, user_id, work_id):
@@ -141,9 +179,9 @@ def main(sqlite_path, user_id, work_id):
         # ユーザ×工夫の行列を取得
         us_table = create_US_table(sqlite_path, work_id)
         # 行列をcsvとして保存
-        table_output = "/app/log/user_scheme_matrix.csv"
-        us_table.to_csv(table_output)
-        fwrite(f"ユーザ×工夫行列を'{table_output}'に保存しました")
+        csv_string = us_table.to_csv()
+        fwrite(csv_string,stdout=False,add_date=True,header="csv",end="\n\n");
+        fwrite(f"ユーザ×工夫行列を保存しました")
         # 推薦を実施
         res_ps = recommend(us_table.T, user_id)
         if res_ps.shape[0] == 0:

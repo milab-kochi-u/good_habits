@@ -25,3 +25,4 @@ COPY app/package*.json ./
 RUN npm install -g express-generator
 RUN npm install
 USER node
+RUN touch /tmp/.env ; chmod 777 /tmp/.env
