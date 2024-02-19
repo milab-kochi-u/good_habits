@@ -265,6 +265,7 @@
           status.innerHTML = "";
           const isSimulating = (result.ok.indexOf("--no-sim") > -1) ? false : true;
           let cnt = [0, ""];
+          await new Promise((resolve) => setTimeout(resolve, 5000));
           while(await isRunning()){
             if(isSimulating){
               let logtail;
